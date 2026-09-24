@@ -1,0 +1,7 @@
+// Cloudflare deploy config: serves everything in ./public as a static site.
+// Free plan is plenty. Later, the online-multiplayer server (a Worker + Durable Object) goes here too.
+{
+  "name": "family-arcade",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./public" }
+}

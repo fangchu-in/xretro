@@ -1,0 +1,119 @@
+/* Family Arcade — shared styles for the launcher and every game.
+   Built for a TV across the room first, then laptops and phones. */
+:root{
+  --page:#0b0c10;
+  --surround:#14161d;
+  --panel:#1a1d26;
+  --panel-2:#222633;
+  --line:#353a4a;
+  --text:#ece6d6;
+  --muted:#9d9cab;
+  --amber:#f5c542;
+  --teal:#3fd0b0;
+  --sky:#7aa8ff;
+  --rose:#ff7eb6;
+  --danger:#ff5a4e;
+  --display:"Silkscreen","Courier New",monospace;
+  --body:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none !important}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--page);color:var(--text);font-family:var(--body)}
+body.arcade-game{overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent}
+
+.stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--page)}
+.stage canvas{display:block}
+
+/* ---------- Menus (drawn over the live game) ---------- */
+.ui-layer{
+  position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:flex-start;
+  padding-block:4vh;padding-inline:max(16px,6vw);
+  background:linear-gradient(90deg,rgba(8,9,12,.94) 0%,rgba(8,9,12,.78) 42%,rgba(8,9,12,.25) 100%);
+}
+.ui-layer.center{justify-content:center;background:rgba(8,9,12,.82)}
+.menu-panel{display:flex;flex-direction:column;gap:clamp(10px,2vmin,24px);max-width:min(640px,100%);width:100%}
+.menu-kicker{font-family:var(--display);color:var(--amber);font-size:clamp(12px,2.2vmin,26px);letter-spacing:.12em;text-transform:uppercase}
+.menu-title{font-family:var(--display);font-weight:700;font-size:clamp(30px,8vmin,120px);line-height:.95;margin:0;letter-spacing:.02em;text-wrap:balance}
+.menu-text{margin:0;color:var(--muted);font-size:clamp(14px,2.4vmin,30px);line-height:1.45;max-width:60ch}
+.menu-text b{color:var(--text);font-weight:600}
+.menu-items{display:flex;flex-direction:column;gap:clamp(4px,.8vmin,10px);margin-top:clamp(4px,1vmin,14px)}
+.menu-item{
+  appearance:none;border:0;background:transparent;color:var(--text);text-align:left;cursor:pointer;
+  font-family:var(--display);font-size:clamp(17px,3.4vmin,46px);letter-spacing:.04em;
+  padding:clamp(6px,1.1vmin,14px) clamp(10px,1.6vmin,22px);display:flex;align-items:center;justify-content:space-between;gap:1em;
+  border-radius:4px;position:relative;
+}
+.menu-item::before{content:"";width:.5em;height:.5em;margin-right:.6em;flex:none;background:transparent;clip-path:polygon(0 0,100% 50%,0 100%)}
+.menu-item .mi-label{flex:1;white-space:nowrap}
+.menu-item .mi-value{white-space:nowrap}
+.menu-item .mi-value{display:flex;align-items:center;gap:.5em;color:var(--amber)}
+.menu-item .mi-value i{font-style:normal;opacity:.55}
+.menu-item.focus{background:var(--amber);color:#16130a}
+.menu-item.focus::before{background:#16130a}
+.menu-item.focus .mi-value{color:#16130a}
+.menu-item.focus .mi-value i{opacity:1}
+.menu-item:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.menu-footer{color:var(--muted);font-size:clamp(12px,1.9vmin,24px);line-height:1.5}
+.keycap{display:inline-block;font-family:var(--display);font-size:.85em;padding:.05em .45em;border:1px solid var(--line);border-bottom-width:3px;border-radius:4px;color:var(--text);background:var(--panel)}
+
+/* ---------- Lobby ---------- */
+.lobby{display:flex;flex-direction:column;gap:clamp(12px,2.4vmin,30px);width:min(1200px,100%)}
+.lobby-slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(8px,1.6vmin,20px)}
+.slot{
+  background:var(--panel);border:2px dashed var(--line);border-radius:8px;
+  padding:clamp(10px,2vmin,26px);display:flex;flex-direction:column;gap:clamp(4px,1vmin,12px);min-height:clamp(120px,24vmin,300px)
+}
+.slot.joined{border-style:solid;border-color:var(--slot-color)}
+.slot.ready{background:color-mix(in srgb,var(--slot-color) 16%,var(--panel))}
+.slot-tag{font-family:var(--display);font-size:clamp(20px,4.6vmin,64px);color:var(--slot-color);line-height:1}
+.slot-src{font-size:clamp(12px,2vmin,24px);color:var(--muted);min-height:1.4em}
+.slot-state{margin-top:auto;font-family:var(--display);font-size:clamp(12px,2.2vmin,28px);letter-spacing:.04em}
+.slot.ready .slot-state{color:var(--slot-color)}
+.lobby-count{font-family:var(--display);font-size:clamp(16px,3vmin,40px);color:var(--amber);min-height:1.2em}
+.lobby-actions{display:flex;flex-wrap:wrap;gap:12px}
+.btn{
+  appearance:none;border:2px solid var(--line);background:var(--panel-2);color:var(--text);cursor:pointer;
+  font-family:var(--display);font-size:clamp(14px,2.4vmin,30px);padding:.5em 1em;border-radius:6px
+}
+.btn.primary{background:var(--amber);border-color:var(--amber);color:#16130a}
+@media (max-width:720px){ .lobby-slots{grid-template-columns:repeat(2,minmax(0,1fr))} }
+
+/* ---------- Touch controls ---------- */
+.touch-ui{position:fixed;inset:0;z-index:10;pointer-events:none}
+.touch-stick{
+  position:absolute;left:max(16px,3vw);bottom:max(16px,4vh);width:min(36vmin,220px);aspect-ratio:1;border-radius:50%;
+  background:rgba(236,230,214,.07);border:2px solid rgba(236,230,214,.22);pointer-events:auto;touch-action:none
+}
+.touch-knob{position:absolute;left:50%;top:50%;width:42%;aspect-ratio:1;border-radius:50%;background:rgba(236,230,214,.32);transform:translate(-50%,-50%);pointer-events:none}
+.touch-fire{
+  position:absolute;right:max(16px,4vw);bottom:max(24px,6vh);width:min(24vmin,150px);aspect-ratio:1;border-radius:50%;
+  background:rgba(245,197,66,.28);border:2px solid rgba(245,197,66,.7);color:var(--text);pointer-events:auto;touch-action:none;
+  display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:clamp(14px,3vmin,22px)
+}
+.touch-fire.on{background:rgba(245,197,66,.55)}
+.touch-pause{
+  position:absolute;right:max(16px,2vw);top:calc(env(safe-area-inset-top,0px) + 10px);pointer-events:auto;
+  appearance:none;border:2px solid rgba(236,230,214,.3);background:rgba(20,22,29,.6);color:var(--text);
+  font-family:var(--display);font-size:14px;padding:8px 12px;border-radius:6px
+}
+
+/* Phones held upright: games are landscape */
+.rotate-hint{display:none}
+@media (orientation:portrait) and (pointer:coarse){
+  .rotate-hint{
+    display:block;position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:30;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:.6em .9em;
+    font-size:14px;color:var(--text);text-align:center
+  }
+}
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 4vh);transform:translateX(-50%);z-index:40;
+  background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:.6em 1.1em;border-radius:6px;
+  font-size:clamp(13px,2vmin,24px);box-shadow:0 8px 30px rgba(0,0,0,.4);max-width:calc(100vw - 32px)
+}
+@media (prefers-reduced-motion:no-preference){
+  .menu-item{transition:background-color .08s}
+}
