@@ -73,7 +73,7 @@ git commit -m "Remove stray bundle, ignore bundles and zips"
 git push origin main
 ```
 
-**Current state (25 Sep):** GitHub `main` = `b113750`. Its code matches `fdc7e19`, the Dirt Dash commit, plus the stray `xretro-update.bundle`. Service worker version `xretro-v3`. The merge commit has an ugly message; ignore it.
+**Current state (25 Sep):** GitHub `main` = `b113750`. Its code matches `fdc7e19`, the Dirt Dash commit, plus the stray `xretro-update.bundle`. Service worker version `xretro-v4` (Hop Hero added). The merge commit has an ugly message; ignore it.
 
 ---
 
@@ -130,7 +130,7 @@ Exports: `Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Tou
 |---|---|---|---|
 | 1 | **Tank** | Battle City | ✅ Live. 1–4 players, co-op + battle, online, drop-in, destructible terrain, power-ups |
 | 2 | **Dirt Dash** | Excitebike | ✅ Live. 1–4 riders + CPU rivals, 4 lanes, 5 tracks (Dusty Hills, Canyon Leap, Monsoon Mud, Night Rally, Himalaya Pro), 2 laps, engine heat, PERFECT landings, Kids/Normal/Pro, split screen, online |
-| 3 | **Hop Hero** | Super Mario Bros | 🔜 Build next |
+| 3 | **Hop Hero** | Super Mario Bros | ✅ Built 25 Sep. 1–4 co-op, shared camera, bubbles, 3 worlds × 3 levels + 3 bosses (Thornback, Crag Crab, Baron Grumble), Kids/Normal/Pro, drop-in, online, ending |
 | 4 | **Tiki Trail** | Adventure Island | 🔜 Build next (same session as Hop Hero if possible) |
 | 5 | **Big Top** | Circus Charlie | Later |
 | 6 | **Strike Force** | Contra | Later (2-player co-op run-and-gun, 1 fire button + aim with D-pad) |
@@ -143,6 +143,8 @@ Side-scrolling platformer with an original hero (not a plumber). **1–4 player 
 
 ### Tiki Trail (brief)
 Tropical side-scroller with an original island kid. **1–2 players** (co-op, shared camera). An **energy bar drains over time**; fruit refills it, which pushes you forward. Fire = jump, and the stone axe is thrown with Down+Fire or automatically (see the controls note below). Skateboard power-up: faster, absorbs one hit. Enemies: snails, bees, frogs, rolling rocks, fire. 3 islands (Beach, Jungle, Volcano) × 3–4 short areas + a boss per island. Tropical steel-drum-style chip music.
+
+> **Settled (Hop Hero):** D-pad runs (hold to sprint), **Fire = jump (hold = higher)**, **Down + Fire = throw** (Hop Hero: sparks with the Zap Flower; Tiki Trail: the axe). Use exactly this in Tiki Trail. `hop.js` has the platformer physics (moveBody, coyote time, jump buffer, corner correction), the shared camera, bubbles and a test bot to reuse.
 
 > Controls note: there's only one action button. For platformers use **Fire = jump** and **Up or Down+Fire = throw/special**, or an auto-throw. Settle it early and keep it the same in every platformer.
 

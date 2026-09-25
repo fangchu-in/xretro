@@ -13,6 +13,8 @@ Plain HTML + JavaScript. No build step.
 public/                   the website (Cloudflare Pages serves this folder)
   index.html              game picker + "Join a friend's room"
   tank.html, games/tank.js
+  dirt.html, games/dirt.js
+  hop.html, games/hop.js    Hop Hero: co-op platformer, 3 worlds x 3 levels + bosses
   shared/core.js          engine: controllers, sound, music, menus, names, lobby, resolution
   shared/net.js           online rooms: host/guest, invite links, reconnect, smooth motion
   shared/core.css, shared/fonts.css, sw.js, manifest.webmanifest, icons/
