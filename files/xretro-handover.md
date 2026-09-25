@@ -73,7 +73,7 @@ git commit -m "Remove stray bundle, ignore bundles and zips"
 git push origin main
 ```
 
-**Current state (25 Sep):** GitHub `main` = `b113750`. Its code matches `fdc7e19`, the Dirt Dash commit, plus the stray `xretro-update.bundle`. Service worker version `xretro-v4` (Hop Hero added). The merge commit has an ugly message; ignore it.
+**Current state (25 Sep):** Hop Hero is live. Dirt Dash stuck-at-wall fix + polish added after it. Service worker version `xretro-v5`. Old merge commits have ugly messages; ignore them.
 
 ---
 
@@ -118,7 +118,7 @@ Exports: `Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Tou
 ### Adding a game (checklist)
 1. `public/games/<id>.js` + `public/<id>.html` (copy dirt.html, change the title and script)
 2. `public/index.html`: make the card playable (`chip play`, `data-href="<id>.html"`)
-3. `public/sw.js`: add both files to `CORE`, bump `VERSION` (next: `xretro-v4`)
+3. `public/sw.js`: add both files to `CORE`, bump `VERSION` (next: `xretro-v6`)
 4. Test (section 7), then commit/push
 5. Update the README game list and this file
 
@@ -168,6 +168,7 @@ What has been tested for each game: solo run to the end, 2P and 3–4P split scr
 - Cloudflare redirects `/tank.html?room=X` to `/tank?room=X` (308). URL checks and tests must accept both forms.
 - Service worker: always bump `VERSION` or TVs keep the old game. `/rooms/` is never cached.
 - Dirt Dash: races were too short (15 s), so there are now 2 laps with longer flat sections (~40 s). PERFECT fired on tiny bumps, so it now needs ≥0.38 s in the air. Speed clamp bug fixed with separate speed-up/slow-down branches. CPU riders still racing at the time limit show "still riding", not "did not finish". The lobby needs the demo race running behind it (`startDemo()`).
+- Dirt Dash: riders who came up short on a gap got stuck forever against the landing ramp's wall (crash, respawn at its foot, crash again). Now a **rescue hop** (`startHop`) carries them over in ~1 s: on hitting a wall, after a crash at the foot of one, and a safety net if a rider sits stalled with the gas on for 1.2 s. Stress-tested: every track × lane × speed finishes. Also added: overtake callouts ("2ND!"), final-lap jingle, turbo/PERFECT speed lines, crash screen shake, finish confetti, long names fitted in the HUD.
 - A merge popped up an editor in CMD and the owner got stuck (see section 3).
 - A game's HUD should not show keyboard hints ("PAUSE: ESC") on touch devices.
 - Long player names need `fitText()` in the HUD.

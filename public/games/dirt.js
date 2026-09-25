@@ -111,7 +111,10 @@ const SX = {
   cool:    s => s.noise({ t: 0.35, v: 0.12, f: 6000, f2: 1500, type: 'highpass' }),
   lane:    s => s.tone({ f: 320, f2: 380, t: 0.05, v: 0.05, wave: 'triangle' }),
   finish:  s => s.melody([[523, .1], [659, .1], [784, .1], [1047, .3]], { v: 0.12 }),
-  hay:     s => s.noise({ t: 0.25, v: 0.2, f: 3000, f2: 600, type: 'bandpass' })
+  hay:     s => s.noise({ t: 0.25, v: 0.2, f: 3000, f2: 600, type: 'bandpass' }),
+  hop:     s => { s.tone({ wave: 'square', f: 260, f2: 780, t: 0.28, v: 0.07 }); s.noise({ t: 0.2, v: 0.08, f: 2000, f2: 500 }); },
+  pass:    s => s.melody([[880, .05], [1320, .09]], { v: 0.07 }),
+  lap:     s => s.melody([[659, .08], [659, .08], [988, .2]], { v: 0.1 })
 };
 function sfx(name){ if(G.demo) return; const f = SX[name]; if(f) try{ f(A.Sound); }catch(e){} if(Net && Net.role === 'host' && netSfx.length < 24) netSfx.push('~' + name); }
 function playNetSfx(n){ if(n[0] === '~'){ const f = SX[n.slice(1)]; if(f) try{ f(A.Sound); }catch(e){} } else A.Sound.play(n); }
@@ -169,8 +172,36 @@ function cpuControls(r){
   return c;
 }
 
+/* Rescue hop: a rider who stalls against a steep wall (short of a gap jump, or after a
+   crash at its foot) is carried over the top in about a second and races on. */
+const wallAhead = (r, dist) => ground(r.x + dist, r.lane) - Math.max(r.h, ground(r.x, r.lane)) > 6 || slopeAt(r.x, r.lane) > 2;
+function startHop(r, why){
+  let top = r.x + 24, hMax = ground(top, r.lane);
+  for(let xx = r.x; xx <= r.x + 60; xx += 2){ const g = ground(xx, r.lane); if(g > hMax + 0.5){ hMax = g; top = xx; } }
+  const x1 = top + 8, h1 = ground(x1, r.lane), h0 = Math.max(r.h, ground(r.x, r.lane));
+  r.hop = { t: 0, dur: G.diff === 'kids' ? 0.8 : 1.05, x0: r.x, h0, x1, h1, c: 2 * (Math.max(h0, hMax) + 12) - (h0 + h1) / 2 };
+  r.crashT = 0; r.air = false; r.turbo = false; r.vy = 0; r.slowT = 0;
+  setMsg(r, why || 'HOP!');
+  burst(r.x + 8, r.lane, h0 + 2, 10, '#d8b58c');
+  sfx('hop');
+}
+function stepHop(r, dt){
+  const H = r.hop; H.t += dt;
+  const u = Math.min(1, H.t / H.dur), e = u * u * (3 - 2 * u);
+  r.x = H.x0 + (H.x1 - H.x0) * e;
+  r.h = Math.max(ground(r.x, r.lane) + 1, (1 - u) * (1 - u) * H.h0 + 2 * u * (1 - u) * H.c + u * u * H.h1);
+  const land = Math.atan(slopeAt(H.x1, r.lane)) / DEG;
+  r.pitch = 30 * (1 - u) + land * u;
+  r.wheel += 120 * dt; r.vx = 0;
+  if(u >= 1){
+    r.hop = null; r.x = H.x1; r.h = ground(r.x, r.lane); r.pitch = land; r.vy = 0;
+    r.vx = 115; r.invT = 0.9; r.heat = Math.min(r.heat, 50);
+    burst(r.x + 2, r.lane, r.h, 6, '#d8b58c'); sfx('land');
+  }
+}
+
 function crash(r, why){
-  if(r.crashT > 0 || r.invT > 0) return;
+  if(r.crashT > 0 || r.invT > 0 || r.hop) return;
   r.crashT = G.diff === 'kids' ? 1.0 : 1.5; r.spin = 0; r.air = false; r.turbo = false; setMsg(r, why || 'CRASH!');
   burst(r.x + 8, r.lane, r.h + 4, 14, '#c9a27a');
   sfx('crash');
@@ -181,10 +212,14 @@ function stepRider(r, dt){
   if(r.invT > 0) r.invT -= dt;
   if(r.laneCool > 0) r.laneCool -= dt;
   if(r.perfect > 0) r.perfect -= dt;
+  if(r.hop){ stepHop(r, dt); return; }
   if(r.crashT > 0){
     r.crashT -= dt; r.spin += dt * 9; r.vx = Math.max(0, r.vx - 260 * dt); r.x += r.vx * dt;
     r.h = Math.max(ground(r.x, r.lane), r.h - 60 * dt);
-    if(r.crashT <= 0){ r.h = ground(r.x, r.lane); r.vy = 0; r.pitch = Math.atan(slopeAt(r.x, r.lane)) / DEG; r.invT = 1.6; r.heat = Math.min(r.heat, 40); r.overT = 0; }
+    if(r.crashT <= 0){
+      r.h = ground(r.x, r.lane); r.vy = 0; r.pitch = Math.atan(slopeAt(r.x, r.lane)) / DEG; r.invT = 1.6; r.heat = Math.min(r.heat, 40); r.overT = 0;
+      if(wallAhead(r, 12)) startHop(r, 'BACK ON!');     // came down at the foot of a wall: hop over it
+    }
     return;
   }
   const c = (G.state === 'race' || G.state === 'finishing' || G.demo || r.fin >= 0) ? controls(r) : { gas: false };
@@ -225,7 +260,7 @@ function stepRider(r, dt){
   if(!r.air){
     const vyG = (gNew - r.h) / dt;
     const sl = (gNew - ground(nx - 2, r.lane)) / 2;
-    if(sl > 3 && gNew - r.h > 4){ crash(r, 'OUCH!'); r.vx = 0; return; }       // rode into a wall
+    if(sl > 3 && gNew - r.h > 4){ startHop(r, G.diff === 'kids' ? 'HOP!' : 'OOF! HOP!'); return; }   // rode into a wall: hop over it
     if(r.vy - vyG > LAUNCH && r.vx > 40){ r.air = true; r.airT = 0; r.h += r.vy * dt; }
     else { r.h = gNew; r.vy = vyG; }
     r.x = nx;
@@ -248,7 +283,8 @@ function stepRider(r, dt){
       const land = Math.atan(sl) / DEG, diff = r.pitch - land;
       const big = r.airT > 0.38;
       if(r.airT > 0.15) burst(r.x + 2, r.lane, g, big ? 8 : 4, '#d8b58c');
-      if(sl > 2.5 || diff < (r.cpu ? -40 : d.noseLimit) || diff > (r.cpu ? 70 : d.tailLimit)){ crash(r, diff < 0 ? 'NOSE DIVE!' : 'LOOPED OUT!'); return; }
+      if(sl > 2.5 && G.diff === 'kids' && !r.cpu){ startHop(r, 'HOP!'); return; }   // came up short on a wall face
+      if(sl > 2.5 || diff < (r.cpu ? -40 : d.noseLimit) || diff > (r.cpu ? 70 : d.tailLimit)){ crash(r, diff < 0 ? 'NOSE DIVE!' : 'LOOPED OUT!'); if(r.crashT <= 0 && sl > 2.5) startHop(r); return; }
       r.vy = r.vx * sl;
       if(big && Math.abs(diff) < 11){ r.vx = Math.min(275, r.vx * 1.12 + 10); r.perfect = 0.6; setMsg(r, 'PERFECT!'); if(!r.cpu) sfx('perfect'); }
       else { if(Math.abs(diff) > 32) r.vx *= 0.72; if(r.airT > 0.15 && !r.cpu) sfx('land'); }
@@ -264,8 +300,12 @@ function stepRider(r, dt){
       else { r.vx *= 0.35; r.invT = 0.8; setMsg(r, 'OOF!'); sfx('hay'); }
     }
   }
+  // safety net: nobody sits stalled with the throttle open for more than a moment
+  if(!r.air && !r.hop && r.crashT <= 0 && r.gas && r.overT <= 0 && r.vx < 12 && r.fin < 0 && (G.state === 'race' || G.demo)){
+    r.slowT = (r.slowT || 0) + dt; if(r.slowT > 1.2) startHop(r, 'BACK ON!');
+  } else r.slowT = 0;
   // finishing
-  if(!r.lap2 && r.x >= TR.lapLine && r.fin < 0){ r.lap2 = true; if(!r.cpu && G.state === 'race') setMsg(r, 'FINAL LAP!'); }
+  if(!r.lap2 && r.x >= TR.lapLine && r.fin < 0){ r.lap2 = true; if(!r.cpu && G.state === 'race'){ setMsg(r, 'FINAL LAP!'); sfx('lap'); } }
   if(r.fin < 0 && r.x >= TR.finish && G.state === 'race'){
     r.fin = G.raceT; setMsg(r, place(r) === 1 ? 'WINNER!' : 'FINISH!');
     if(!r.cpu){ sfx('finish'); if(G.firstFinish < 0) G.firstFinish = G.raceT; }
@@ -290,12 +330,19 @@ function place(r){
 
 /* ---------- Cosmetic particles (run on every device from rider state) ---------- */
 let parts = [];
+const seenFin = new Set();
+const CONFETTI = ['#f5c542', '#e2463c', '#3fd0b0', '#7aa8ff', '#ff7eb6', '#f4efe2'];
 function burst(x, lane, h, n, col){
   for(let i = 0; i < n; i++) parts.push({ x, lane, h, vx: (Math.random() - 0.3) * 90, vh: Math.random() * 70 + 10, t: 0, life: 0.5 + Math.random() * 0.4, col, r: 1 + Math.random() * 1.6 });
   if(parts.length > 300) parts.splice(0, parts.length - 300);
 }
 function fxStep(dt){
   for(const r of G.riders){
+    if(r.fin >= 0 && !seenFin.has(r.id) && !G.demo){
+      seenFin.add(r.id);
+      for(let i = 0; i < (r.human ? 40 : 12); i++) parts.push({ x: r.x + 8, lane: r.lane, h: r.h + 14, vx: (Math.random() - 0.5) * 140, vh: 40 + Math.random() * 110, t: 0, life: 1 + Math.random() * 0.8, col: CONFETTI[i % CONFETTI.length], r: 1.4 });
+    }
+    if(r.hop){ if(Math.random() < 0.7) parts.push({ x: r.x + Math.random() * 16, lane: r.lane, h: r.h + Math.random() * 6, vx: -30, vh: 10 + Math.random() * 20, t: 0, life: 0.4, col: Math.random() < 0.5 ? '#fff3b0' : '#f5c542', r: 1.1 }); continue; }
     if(r.crashT > 0 || r.air || G.demo && Math.random() < 0.5) continue;
     if(r.gas && r.vx > 20 && Math.random() < (r.turbo ? 0.9 : 0.35))
       parts.push({ x: r.x - 2, lane: r.lane, h: r.h + 1, vx: -r.vx * 0.3 - 20, vh: 20 + Math.random() * 40, t: 0, life: 0.35, col: inZone('mud', r.x, r.lane) ? '#5a3b25' : '#c9a27a', r: 1.2 });
@@ -364,6 +411,14 @@ function sim(dt){
   if(G.state === 'race' || G.demo) G.raceT += dt;
   for(const r of G.riders) stepRider(r, dt);
   riderCollisions();
+  if(G.state === 'race' && G.raceT > 3){
+    for(const r of G.riders){
+      if(!r.human || r.fin >= 0) continue;
+      const pl = place(r);
+      if(r.lastPlace && pl < r.lastPlace && (r.msgT <= 0.4 || /^\d/.test(r.msg))){ setMsg(r, ordinal(pl) + '!'); sfx('pass'); }
+      r.lastPlace = pl;
+    }
+  }
   if(G.demo){ for(const r of G.riders) if(r.x > TR.finish + 150){ r.x = 0; r.h = 0; r.air = false; } return; }
   if(G.state !== 'race') return;
   const humans = G.riders.filter(r => r.human);
@@ -496,7 +551,7 @@ const netHandlers = {
 const r1 = v => Math.round(v * 10) / 10, r2 = v => Math.round(v * 100) / 100;
 function sendSnap(){
   const s = { t: 's', tm: r2(G.time), st: G.state === 'paused' ? 'paused' : G.state, sT: r2(G.stateT), rt: r2(G.raceT), tr: G.trackIx, d: G.diff, dm: G.demo ? 1 : 0, ff: r2(G.firstFinish),
-    r: G.riders.map(r => [r.id, r1(r.x), r2(r.lane), r1(r.h), r1(r.pitch), r1(r.vx), (r.air ? 1 : 0) | (r.gas ? 2 : 0) | (r.turbo ? 4 : 0) | (r.cpu ? 8 : 0) | (r.human ? 16 : 0) | (r.wheelie ? 32 : 0),
+    r: G.riders.map(r => [r.id, r1(r.x), r2(r.lane), r1(r.h), r1(r.pitch), r1(r.vx), (r.air ? 1 : 0) | (r.gas ? 2 : 0) | (r.turbo ? 4 : 0) | (r.cpu ? 8 : 0) | (r.human ? 16 : 0) | (r.wheelie ? 32 : 0) | (r.hop ? 64 : 0),
       Math.round(r.heat), r2(r.crashT), r2(r.spin), r2(r.overT), r2(r.fin), r2(r.invT), r.name, r.color, r.source || '', r.msgT > 0 ? r.msg : '', r2(r.msgT), r2(r.perfect)]) };
   if(netSfx.length){ s.sfx = netSfx; netSfx = []; }
   Net.broadcast(s);
@@ -511,7 +566,7 @@ function guestFrame(dt){
     const o = prev.get(q[0]), near = o && Math.abs(o[1] - q[1]) < 60;
     const f = q[6];
     return { id: q[0], x: near ? L(o[1], q[1]) : q[1], lane: near ? L(o[2], q[2]) : q[2], h: near ? L(o[3], q[3]) : q[3], pitch: near ? L(o[4], q[4]) : q[4], vx: q[5],
-      air: !!(f & 1), gas: !!(f & 2), turbo: !!(f & 4), cpu: !!(f & 8), human: !!(f & 16), wheelie: !!(f & 32),
+      air: !!(f & 1), gas: !!(f & 2), turbo: !!(f & 4), cpu: !!(f & 8), human: !!(f & 16), wheelie: !!(f & 32), hop: !!(f & 64),
       heat: q[7], crashT: q[8], spin: near ? L(o[9], q[9]) : q[9], overT: q[10], fin: q[11], invT: q[12], name: q[13], color: q[14], source: q[15], msg: q[16], msgT: q[17], perfect: q[18],
       wheel: (near ? L(o[1], q[1]) : q[1]) };
   });
@@ -592,6 +647,7 @@ function shade(hex, k){
   const n = parseInt(hex.slice(1), 16), f = v => Math.max(0, Math.min(255, Math.round(v * k)));
   return 'rgb(' + f(n >> 16 & 255) + ',' + f(n >> 8 & 255) + ',' + f(n & 255) + ')';
 }
+function fitText(c, str, maxW, size){ c.font = size + 'px ' + FONT; while(size > 3 && c.measureText(str).width > maxW){ size -= 0.5; c.font = size + 'px ' + FONT; } return size; }
 const ordinal = n => n + (n === 1 ? 'ST' : n === 2 ? 'ND' : n === 3 ? 'RD' : 'TH');
 
 function drawView(c, v, r, dt){
@@ -605,6 +661,8 @@ function drawView(c, v, r, dt){
   const X = wx => v.x + (wx - cam.x) * s;
   const Y = (lane, h) => v.y + v.h - (h + lane * LANE_H + BOTTOM - cam.h) * s;
   c.save(); c.beginPath(); c.rect(v.x, v.y, v.w, v.h); c.clip();
+  const crashLen = G.diff === 'kids' ? 1.0 : 1.5;
+  if(r.crashT > crashLen - 0.35 && !G.demo){ const k = (r.crashT - (crashLen - 0.35)) * 8 * s; c.translate((Math.random() - 0.5) * k, (Math.random() - 0.5) * k); }
 
   // sky
   const sky = c.createLinearGradient(0, v.y, 0, v.y + v.h);
@@ -700,6 +758,13 @@ function drawView(c, v, r, dt){
   // particles
   for(const p of parts){ if(p.x < x0 - 10 || p.x > x1 + 10) continue; c.globalAlpha = 1 - p.t / p.life; c.fillStyle = p.col; c.fillRect(X(p.x) - p.r * s / 2, Y(p.lane, p.h) + LANE_H * s * 0.45 - p.r * s / 2, p.r * s, p.r * s); }
   c.globalAlpha = 1;
+  // speed lines on turbo and after a PERFECT landing
+  if(!G.demo && (r.perfect > 0 || (r.turbo && r.vx > 200))){
+    c.strokeStyle = r.perfect > 0 ? 'rgba(127,227,255,.55)' : 'rgba(255,255,255,.32)'; c.lineWidth = Math.max(0.6, 0.7 * s); c.beginPath();
+    for(let i = 0; i < 14; i++){ const ly = v.y + rng(i + 40) * v.h, len = (20 + rng(i + 80) * 40) * s, lx = v.x + ((rng(i) * v.w * 1.5 - G.time * 900 * s) % (v.w * 1.5) + v.w * 1.5) % (v.w * 1.5) - len;
+      c.moveTo(lx, ly); c.lineTo(lx + len, ly); }
+    c.stroke();
+  }
   // weather
   if(td.rain){ c.strokeStyle = 'rgba(200,215,235,.5)'; c.lineWidth = 0.8; c.beginPath();
     for(let i = 0; i < 60; i++){ const rx = v.x + ((rng(i) * v.w + G.time * 60 - cam.x * s * 0.2) % v.w + v.w) % v.w, ry = v.y + ((rng(i + 5) * v.h + G.time * 420) % v.h); c.moveTo(rx, ry); c.lineTo(rx - 2, ry + 7); } c.stroke(); }
@@ -729,7 +794,10 @@ function drawRider(c, r, sx, sy, s, focus){
   drawRiderBody(c, col, false, r);
   c.restore();
   if(!focus && !G.demo) outlined(c, r.name.toUpperCase(), sx + 8 * s, sy - 30 * s, Math.max(4, 4.2 * s), col);
-  if(r.msgT > 0 && r.msg){ outlined(c, r.msg, sx + 8 * s, sy - 38 * s - (1.2 - r.msgT) * 10 * s, Math.max(5, 6 * s), r.msg === 'PERFECT!' ? '#7fe3ff' : r.msg.includes('!') && r.msg !== 'FINISH!' && r.msg !== 'WINNER!' ? '#ff8a6a' : '#f5c542'); }
+  if(r.msgT > 0 && r.msg){
+    const m = r.msg, good = m === 'FINISH!' || m === 'WINNER!' || m === 'FINAL LAP!' || m.includes('HOP') || m === 'BACK ON!';
+    outlined(c, m, sx + 8 * s, sy - 38 * s - (1.2 - r.msgT) * 10 * s, Math.max(5, 6 * s), m === 'PERFECT!' ? '#7fe3ff' : /^\d/.test(m) ? '#3fd07a' : good ? '#f5c542' : '#ff8a6a');
+  }
 }
 function drawBike(c, r, loose){
   const wa = (r.wheel || 0) * 0.35;
@@ -777,7 +845,7 @@ function drawViewHUD(c, v, r){
   const pl = G.demo ? 0 : place(r);
   if(!G.demo){
     outlined(c, ordinal(pl), v.x + pad + 14 * k, v.y + pad + 7 * k, 12 * k, pl === 1 ? '#f5c542' : '#f4efe2', 'center');
-    text(c, r.name.toUpperCase(), v.x + pad + 30 * k, v.y + pad + 2 * k, 6 * k, r.color);
+    { const nm = r.name.toUpperCase(); text(c, nm, v.x + pad + 30 * k, v.y + pad + 2 * k, fitText(c, nm, v.w * 0.3 - pad - 34 * k, 6 * k), r.color); }
     // timer
     const tm = r.fin >= 0 ? r.fin : Math.max(0, G.raceT);
     text(c, fmt(tm), v.x + v.w - pad, v.y + pad + 2 * k, 7 * k, '#f4efe2', 'right');
@@ -868,5 +936,5 @@ if(document.fonts && document.fonts.load){
   Promise.race([document.fonts.load('10px "Silkscreen"'), new Promise(r => setTimeout(r, 1500))]).then(boot, boot);
 } else boot();
 window.__dirt = G;
-window.__dirtDebug = { Net, TR: () => TR, place, crash, ground };
+window.__dirtDebug = { Net, TR: () => TR, place, crash, ground, stepRider, buildTrack, TRACKS, setTR: t => { TR = t; }, makeRider };
 })();
