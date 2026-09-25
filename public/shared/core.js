@@ -70,7 +70,8 @@ const Sound = {
     if(!this.ok() && !o.bus) return;
     const c = this.ctx, t0 = o.when || (c.currentTime + (o.at || 0));
     const osc = this.osc(o.wave), g = c.createGain();
-    osc.frequency.setValueAtTime(o.f, t0);
+    if(o.glide){ osc.frequency.setValueAtTime(o.f * (o.glideFrom || 0.94), t0); osc.frequency.exponentialRampToValueAtTime(o.f, t0 + o.glide); }
+    else osc.frequency.setValueAtTime(o.f, t0);
     if(o.f2) osc.frequency.exponentialRampToValueAtTime(o.f2, t0 + o.t);
     if(o.vib){
       const lfo = c.createOscillator(), lg = c.createGain();
@@ -191,7 +192,26 @@ const Music = {
           s.tone({ bus, when: w(t), wave: 'sine', f: f * 2.01, t: 0.2, v: vv * 0.42, attack: 0.003 });
           s.tone({ bus, when: w(t), wave: 'triangle', f: f * 3, t: 0.09, v: vv * 0.2, attack: 0.002 });
         }
+      } else if(n && song.flute){
+        // bansuri-style flute: soft sine that slides up into the note, with a breath of air and vibrato on long notes
+        const v = song.leadVol || 0.075, f = hz(n), dur = len * sd * 0.95, prev = lead[(li - 1 + lead.length) % lead.length];
+        s.tone({ bus, when: t, wave: 'sine', f, t: dur, v, vib: len >= 3, attack: 0.03, glide: prev === '.' || len >= 4 ? 0.07 : 0, glideFrom: 0.945 });
+        s.tone({ bus, when: t, wave: 'triangle', f: f * 2, t: dur * 0.8, v: v * 0.12, attack: 0.04 });
+        s.noise({ bus, when: t, t: Math.min(0.14, dur), v: v * 0.35, f: f * 2.2, type: 'bandpass', q: 3, attack: 0.01 });
+      } else if(n && song.sitar){
+        // sitar-style pluck: bright buzzy attack that rings down, with a little bend (meend) into long notes
+        const v = song.leadVol || 0.075, f = hz(n), ring = Math.min(0.9, len * sd * 1.2);
+        s.tone({ bus, when: t, wave: 'sawtooth', f, t: ring, v: v * 0.55, attack: 0.002, glide: len >= 4 ? 0.09 : 0, glideFrom: 0.955 });
+        s.tone({ bus, when: t, wave: 'triangle', f: f * 2.003, t: ring * 0.7, v: v * 0.5, attack: 0.002 });
+        s.tone({ bus, when: t, wave: 'sine', f: f * 4.01, t: 0.06, v: v * 0.3, attack: 0.001 });
       } else if(n) s.tone({ bus, when: t, wave: song.leadWave || 'pulse25', f: hz(n), t: len * sd * 0.92, v: song.leadVol || 0.075, vib: len >= 4, attack: 0.008 });
+    }
+    // tanpura-style drone: a soft Pa–Sa–Sa–Sa cycle under the whole song
+    if(song.drone && k % 4 === 0){
+      const dn = [ch[0] - 5, ch[0], ch[0], ch[0] - 12][k / 4], dRoot = song.droneRoot !== undefined ? midi(song.droneRoot) : null;
+      const note = dRoot !== null ? [dRoot + 7, dRoot + 12, dRoot + 12, dRoot][k / 4] : dn;
+      s.tone({ bus, when: t, wave: 'sawtooth', f: hz(note), t: sd * 5.5, v: 0.018, attack: 0.05 });
+      s.tone({ bus, when: t, wave: 'sine', f: hz(note), t: sd * 5.5, v: 0.05, attack: 0.04 });
     }
     // bass
     const bassStyle = song.bass || 'drive';
@@ -222,6 +242,12 @@ const Music = {
     if(d === 'b'){ s.tone({ bus, when: t, wave: 'sine', f: 440, f2: 330, t: 0.09, v: 0.16, attack: 0.002 }); }
     if(d === 'l'){ s.tone({ bus, when: t, wave: 'sine', f: 280, f2: 200, t: 0.13, v: 0.2, attack: 0.002 }); }
     if(d === 'c'){ s.noise({ bus, when: t, t: 0.05, v: 0.045, f: 7000, type: 'highpass', attack: 0.012 }); }
+    // Indian percussion: d = tabla bass (dha, bends up), t = tabla ring (tin), n = bright na, g = dhol boom, j = manjira bells
+    if(d === 'd'){ s.tone({ bus, when: t, wave: 'sine', f: 96, f2: 150, t: 0.22, v: 0.3, attack: 0.002 }); s.tone({ bus, when: t, wave: 'sine', f: 520, t: 0.1, v: 0.07, attack: 0.001 }); }
+    if(d === 't'){ s.tone({ bus, when: t, wave: 'sine', f: 560, t: 0.16, v: 0.12, attack: 0.001 }); s.tone({ bus, when: t, wave: 'sine', f: 1130, t: 0.06, v: 0.04, attack: 0.001 }); }
+    if(d === 'n'){ s.tone({ bus, when: t, wave: 'triangle', f: 760, t: 0.1, v: 0.1, attack: 0.001 }); s.noise({ bus, when: t, t: 0.03, v: 0.05, f: 5000, type: 'highpass' }); }
+    if(d === 'g'){ s.tone({ bus, when: t, wave: 'sine', f: 120, f2: 52, t: 0.24, v: 0.36, attack: 0.002 }); s.noise({ bus, when: t, t: 0.08, v: 0.1, f: 900, f2: 200 }); }
+    if(d === 'j'){ s.tone({ bus, when: t, wave: 'sine', f: 2960, t: 0.22, v: 0.03, attack: 0.001 }); s.tone({ bus, when: t, wave: 'sine', f: 4180, t: 0.14, v: 0.018, attack: 0.001 }); }
   }
 };
 

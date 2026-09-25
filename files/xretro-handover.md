@@ -1,6 +1,6 @@
 # xRetro — Project Handover
 
-Last updated: 25 Sep 2026 (late night, Tiki Trail added). Read this whole file before touching code. Where this file and the code disagree, **the code wins**. Read `public/games/dirt.js` and `public/shared/core.js` before writing a new game.
+Last updated: 25 Sep 2026 (Mighty Yeti and Volt GP added). Read this whole file before touching code. Where this file and the code disagree, **the code wins**. Read `public/games/dirt.js` and `public/shared/core.js` before writing a new game.
 
 ---
 
@@ -64,8 +64,8 @@ Always start from `git pull origin main --no-edit`: when GitHub has a commit the
 - `git add .` picks up anything sitting in the folder, so keep downloads (zips, bundles) out of it.
 - The "LF will be replaced by CRLF" warnings on Windows are harmless.
 
-**Current state (25 Sep, late night):** GitHub `main` = `feb996c` (Add Blacktop Brawl, `sw.js` v6). Tank, Dirt Dash, Hop Hero and Blacktop Brawl are live. `.gitignore` ignores `*.bundle` and `*.zip`. Old merge commits have ugly messages; ignore them.
-Next commit (sent as `tiki-trail.zip`): Tiki Trail (`public/tiki.html`, `public/games/tiki.js`), a small `core.js` music addition (steel-drum lead, calypso bass, bongo/shaker drums), its index card, `sw.js` → **`xretro-v7`**, README row, this file. Tested locally, not yet pushed by the owner.
+**Current state (25 Sep):** GitHub `main` = `c69770f` (Add Tiki Trail, `sw.js` v7). Tank, Dirt Dash, Hop Hero, Blacktop Brawl and Tiki Trail are live. `.gitignore` ignores `*.bundle` and `*.zip`. Old merge commits have ugly messages; ignore them.
+Next push (sent as `yeti-volt.zip`, which replaces `mighty-yeti.zip`): **Mighty Yeti** (`public/yeti.html`, `public/games/yeti.js`, `core.js` music additions: bansuri flute lead, sitar pluck lead, tanpura drone, tabla/dhol/manjira drums, pitch glide in `Sound.tone`) and **Volt GP** (`public/volt.html`, `public/games/volt.js`), both index cards (the Apex GP 'coming soon' card is replaced by Volt GP), `sw.js` → **`xretro-v9`**, README rows, this file. Tested locally, not yet pushed by the owner.
 
 ---
 
@@ -104,7 +104,7 @@ The repo is going public so anyone can read, fork and enjoy the code. **Nobody e
 ### Engine: `window.Arcade` (public/shared/core.js, 907 lines)
 Exports: `Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Touch, Menu, Lobby, TextEntry, Display, run, toast, keepAwake, toggleFullscreen, goLandscape, registerOffline, settingsItems, shareInvite, el, esc, dom{menuDom,lobbyDom}, PLAYER_COLORS, QUALITY_LABELS`
 - `Sound.play(name)`. Built-in sounds: move select confirm back join online leave pause type shoot brick steel armor explode boom spawn powerAppear powerUp lifeUp freeze bomb stageStart stageClear gameOver win countdown go. Games can add their own (dirt.js has `SX`).
-- `Music.play(song)`, `stop()`, `duck(on)`, `intensity(n)`. A song is a data object (bpm, melody, bass, arp, drums). See `THEMES.menu`, `TANK_THEME`, `DIRT_THEME`. Every game gets its **own original theme**. Optional extras (added for Tiki Trail, ignored by older songs): `steel: true` plays the lead as a steel drum (struck partials, long notes rolled), `bass: 'calypso'`, and drum letters `b` high bongo, `l` low bongo, `c` shaker.
+- `Music.play(song)`, `stop()`, `duck(on)`, `intensity(n)`. A song is a data object (bpm, melody, bass, arp, drums). See `THEMES.menu`, `TANK_THEME`, `DIRT_THEME`. Every game gets its **own original theme**. Optional extras (ignored by older songs): `steel: true` plays the lead as a steel drum, `bass: 'calypso'`, drum letters `b` high bongo, `l` low bongo, `c` shaker (Tiki Trail). Added for Mighty Yeti: `flute: true` (bansuri: breathy sine that slides into notes), `sitar: true` (buzzy pluck with a bend on long notes), `drone: true` (+ optional `droneRoot`) for a soft tanpura Pa–Sa cycle, drum letters `d` tabla dha, `t` tabla tin, `n` na, `g` dhol boom, `j` manjira bells. `Sound.tone` takes `glide` (seconds) and `glideFrom` (ratio) for slides.
 - `Names`: device name, fun random names, `forSource()`. `TextEntry` is an on-screen keyboard that works with a controller.
 - `Lobby.open(cfg)`, `Menu.open(def)` (menus marked `shared:true` show on every online screen), `run(step, render, display)` is the game loop.
 - `Store` saves to localStorage under the prefix `arcade.` (best times, settings).
@@ -120,7 +120,7 @@ Exports: `Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Tou
 ### Adding a game (checklist)
 1. `public/games/<id>.js` + `public/<id>.html` (copy dirt.html, change the title and script)
 2. `public/index.html`: make the card playable (`chip play`, `data-href="<id>.html"`)
-3. `public/sw.js`: add both files to `CORE`, bump `VERSION` (next: `xretro-v8`)
+3. `public/sw.js`: add both files to `CORE`, bump `VERSION` (next: `xretro-v10`)
 4. Test (section 7), then commit/push
 5. Update the README game list and this file
 
@@ -134,10 +134,11 @@ Exports: `Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Tou
 | 2 | **Dirt Dash** | Excitebike | ✅ Live. 1–4 riders + CPU rivals, 4 lanes, 5 tracks (Dusty Hills, Canyon Leap, Monsoon Mud, Night Rally, Himalaya Pro), 2 laps, engine heat, PERFECT landings, rescue hop over walls, overtake callouts, Kids/Normal/Pro, split screen, online |
 | 3 | **Hop Hero** | Super Mario Bros | ✅ Live 25 Sep (owner confirmed). 1–4 co-op, shared camera, bubbles, 3 worlds × 3 levels + 3 bosses (Thornback, Crag Crab, Baron Grumble), Kids/Normal/Pro, drop-in, online, ending |
 | 3b | **Blacktop Brawl** | Road Rash | ✅ Reviewed, reworked and tested 25 Sep; sent as `blacktop-brawl.zip`, waiting for the owner's push. 1–4 riders + CPU rivals, 4 routes, cartoon bonks, gift-box items, hops/ramps, drop-in, Kids/Normal/Pro, split screen, online |
-| 4 | **Tiki Trail** | Adventure Island | ✅ Built and tested 25 Sep; sent as `tiki-trail.zip`, waiting for the owner's push. 1–2 co-op, shared camera, energy bar + fruit, stone axe, skateboard, secret caves, 3 islands × 3 areas + 3 bosses, Kids/Normal/Pro, drop-in, online |
+| 4 | **Tiki Trail** | Adventure Island | ✅ Live 25 Sep (`c69770f`). 1–2 co-op, shared camera, energy bar + fruit, stone axe, skateboard, secret caves, 3 islands × 3 areas + 3 bosses, Kids/Normal/Pro, drop-in, online |
+| 4b | **Mighty Yeti** | Super Mario Bros (Humble Yeti brand game) | ✅ Built and tested 25 Sep; sent as `mighty-yeti.zip`, waiting for the owner's push. 1–4 co-op, shared camera, 6 Indian regions × 2 levels + 3 bosses, Mighty Meter, kindness snowballs, friends who follow and help, Kids/Normal/Pro, drop-in, online |
 | 5 | **Big Top** | Circus Charlie | Later |
 | 6 | **Strike Force** | Contra | Later (2-player co-op run-and-gun, 1 fire button + aim with D-pad) |
-| 7 | **Apex GP** | F1 Race | Later (top-down racing) |
+| 7 | **Volt GP** (was "Apex GP") | F1 Race | ✅ Built and tested 25 Sep; in `yeti-volt.zip`, waiting for the owner's push. Electric Grand Prix, behind-the-car 3D, 3 lanes, 8 tracks, 1–4 + CPU rivals, quick race or championship, online |
 
 The owner decides the order. Build **one game at a time, fully finished and tested**.
 
@@ -165,6 +166,31 @@ Side-scrolling platformer with an original hero (not a plumber). **1–4 player 
 - **Music:** steel-drum themes per island + boss, charm and ending themes (all original, in tiki.js).
 - **Online:** host runs everything; map changes (fruit eaten, boulders, crumbling rock) go as mods like Hop Hero. Tested host + guest to boss and clear, guest sees the boss toast.
 - **Tests (25 Sep):** bot runs of all 12 areas finish in god mode and on Kids (no lives lost); 2P runs; Tiki Tower; bubble and pop-back; phone viewport with touch; file://; online host + guest; other games load with zero errors. The bot is weak on rafts/lifts/Kelp on Normal (it loses lives there); that's the bot, not the levels.
+
+### Mighty Yeti: A Wild Quest Across India (done)
+A **Humble Yeti** brand game for kids 7–12 (humbleyeti.com, tagline "mighty goodness for little explorers", brand based in Pune; millet pancake mixes, no maida, refined sugar or palm oil). Lives inside xRetro for testing; may move to a Humble Yeti domain later. `public/games/yeti.js` (~3,350 lines), built on tiki.js/hop.js (tile map, `moveBody`, shared camera, bubbles, snapshot pattern, bot).
+- **Owner's decisions:** name "Mighty Yeti: A Wild Quest Across India". Mascot **Himu**, a cool explorer yeti (owner's reference: helmet + ski goggles + big white beard). Original drawing: helmet in the player colour with white/gold stripes, big orange goggles with snowy peaks mirrored in the lens, shadowed face with a button nose, huge pointed beard and moustache, trail boots, Humble Yeti green backpack with a bedroll; drawn with a dark outline via `withOutline()` (offscreen canvas). **Every player is a yeti** (helmet colour = player colour). Friends: **Ishu** red panda (catches you once over a pit), **Ganu** monkey (grabs fruit out of reach), **Rudra** rhino (charges through junk blockades); they follow and help in solo and multiplayer. **Durgi** and **Krish** are the demo yetis. English only.
+- **No product placement beyond one pancake stall per region**; no ingredient pickups (products still in development). Goodies are fruit, water drops, coconut water, stars. Villains the owner approved: Sugar Blobs, Fizz Bubbles, Maida Phantoms, Palm Oil Slicks, Candy Bots, Sloth Cloud. Yucks are never hurt: a snowball or bop "cheers them up" into happy critters.
+- **Kangchenjunga, not Everest** (owner: keep the whole quest in India). Regions in order: Kerala Backwaters, Odisha Coast, Ellora Caves, Rajasthan Forts, Assam Tea Hills, Sikkim · Kangchenjunga. Each has a fun fact on the intro card and its own music (chenda/flute, bansuri, drone, dholak/sitar, dhol, bansuri+bells). No enemies on temples or monuments.
+- **Controls** (settled platformer scheme): D-pad runs (hold to sprint), FIRE jumps (hold = higher), **DOWN+FIRE throws a kindness snowball**, UP climbs ropes. Touch button says JUMP.
+- **Mighty Meter:** goodies fill it: Tiny → Yeti → Mighty (smashes cracked blocks, opens Mighty routes) → Glide (hold FIRE in the air). A hit drops one stage; Kids never go below Tiny. Kindness badges (free a bird, water a sapling, 2 per level) unlock the Explorer route. Basecamp tents = checkpoints. Three routes per level (ground, Explorer, Mighty) plus secret caves.
+- **Levels:** 1-1 Coconut Canals, 1-2 Houseboat Bend, 2-1 Turtle Tides, 2-2 Sun Wheel Shore, 3-1 Carved Caverns, 3-2 Lantern Halls (dark, lantern glow), **3-B Echo Hall: Bat Swarm**, 4-1 Golden Dunes, 4-2 Fort Gate Run (sandstorm wind), **4-B Dust Devil Dunes: Sandstorm Djinn** (maida dust), 5-1 Tea Terraces, 5-2 Rhino River, 6-1 Prayer Flag Pass, 6-2 Eagle Ridge (ice, eagle carry), **6-B Summit of Kangchenjunga: Sugar Cube King** (drums down falling cubes, flings cubes, hops across with a landing shadow, then sits down tired). Bosses take snowballs only while resting; stomping a resting boss = 2 hits.
+- **Ending:** Humble Yeti flag at the summit, lines ("Kindness made you mighty", "The biggest hearts stay humble", "Share. Help. Say thank you.", "Give someone a big Yeti hug today!"), then a menu with the message, team stats and a text link to humbleyeti.com for grown-ups. No data collected.
+- **Logo:** redrawn in code (`drawLogo`, `miniMark`) from the owner's logo. Brand colours are in `HY` at the top of yeti.js (#242021, #328F42, #F5E20A, #B0C936, #7BB33B, #C5DF8A, #F5981F, #E95824, #FFCC00).
+- **Debug:** `window.__yeti` is the state, `window.__yetiDebug` has `loadLevel`, `newGame`, `sim`, `reachGoal`, `drawYeti`, `yetiSprite`… Set `p.bot = true`, `G.god = true`, `G.botSecret = true`, `G.log = []` like Tiki.
+- **Tests (25 Sep):** bot runs of all 15 stages finish on Normal (god and no-god), Kids 2P, Pro, and 4P; phone viewport with touch lobby → play; file://; online host + guest (guest moves, both reach the clear screen); other games and the index load with zero errors. The 4P HUD puts names above the meters so nothing overlaps.
+
+### Volt GP (done)
+Owner's brief (25 Sep, from his phone): F1 Race, but **3 lanes**, **electric cars**, **regen when slowing/braking** that can be spent to **boost/overtake**, more F1 and Formula E ideas, at least 6 famous tracks including **Singapore at night**. Owner chose: behind-the-car view, name **Volt GP**, race length picked in the menu. `public/games/volt.js` (~1,600 lines). New pseudo-3D road renderer (segment projection, drawn back to front so tunnels, bridges, walls, sprites and cars layer correctly); menus/lobby/online/drop-in copied from brawl.js.
+- **Controls:** the car accelerates by itself. LEFT/RIGHT = lane (3 lanes), DOWN = brake **and regen**, **hold FIRE = BOOST** (uses battery), UP = "box this lap" (pit request). Touch button says BOOST.
+- **Battery:** drains slowly with speed (scaled so a race of any length is possible), boost drains fast, braking above 20% speed recharges 10%/s, rolling downhill recharges a little. Empty = limp at 55% speed. Rear light flashes while harvesting (like Formula E). Kids: battery never below 22%.
+- **Bends:** each bend pushes the car outward (`PUSH`, `STEER`, tyre grip, rain). Too fast = slide wide + tyre scrub; street tracks (Monaco, Singapore, Hyderabad) have walls: a hard hit on Normal/Pro spins you. Kids get **brake assist** (auto-brakes for bends, still regens).
+- **Formula extras:** Attack Mode (pink pad in the left lane once per lap: 8 s of +7% and half drain), DRS (on DRS straights within ~1 s of the car ahead, from lap 2), slipstream tow, pit stop (UP, stay in the right lane at the end of the lap, press FIRE when the needle is green: fresh tyres + Pit Boost +25%; the crew always releases you after ~4 s), tyre wear (8%/lap, shown on Medium/Long), safety car (after a spin, 35% chance; or once at random in Medium/Long races; field bunches up, no passing, then GREEN FLAG), 5 red start lights, fastest lap (purple, +1 championship point), podium with confetti.
+- **Tracks** (real place names, original layouts approximated from sections in `TRACKS`): Monaco (harbour, tunnel under a hotel), Singapore (night, floodlights, skyline, observation wheel), Silverstone (rain possible), Monza (fastest), Suzuka (figure-of-eight: passes under a bridge, then over it), Spa (big valley dip and climb, rain possible), Buddh (India, sunset, long back straight), Hyderabad (India, night street race by a lake). Ad boards include HUMBLE YETI and XRETRO. Music: VOLT theme, NIGHT theme (Singapore), INDIA theme with sitar and tabla (Buddh, Hyderabad), PODIUM theme.
+- **Modes:** Quick race or Championship (8 rounds in track order, points 25-18-15-12-10-8-6-4 + fastest lap). Lengths: Short 3 laps (~90 s), Medium 5, Long 8. Weather: Auto/Dry/Wet. Difficulty Kids/Normal/Pro. Rivals: Zap, Volty, Jolt, Flux, Dynamo, Ohmi, Coil (colours kept clear of the four player colours; no rival shares a fun-name). Humans start mid-grid. Rivals ease off when far ahead of every human.
+- **Online:** host runs everything; snapshot ~8 cars × 22 fields (~900 bytes). Guests rebuild the track from its index. Tested host + guest: guest lane changes and boost reach the host, both reach the podium.
+- **Debug:** `window.__volt` = state, `window.__voltDebug` has `newRace`, `startChampionship`, `sim`, `finishRace`, `TK()`, `safetyCar`, `spin`… Set `G.bot = true` to make human cars drive themselves (CPU logic, also pits).
+- **Tests (25 Sep):** bot races on all 8 tracks × Short/Medium/Long, Normal/Pro/Kids, 1/2/4 players finish with zero errors (Short ≈ 80–105 s); non-braking driver crashes at Monaco and loses (bends matter); pit stops, safety car, championship round flow, podium/results, phone touch with BOOST held, file://, online host + guest, all other games load.
 
 > **Settled (Hop Hero):** D-pad runs (hold to sprint), **Fire = jump (hold = higher)**, **Down + Fire = throw** (Hop Hero: sparks with the Zap Flower; Tiki Trail: the axe). Use exactly this in Tiki Trail. `hop.js` has the platformer physics (moveBody, coyote time, jump buffer, corner correction), the shared camera, bubbles and a test bot to reuse.
 

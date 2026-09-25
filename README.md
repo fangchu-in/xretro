@@ -18,6 +18,8 @@ Plain HTML + JavaScript. No build step, no frameworks, no npm packages in the ga
 | **Hop Hero** | Mario-style co-op platformer: 3 worlds × 3 levels + bosses, shared camera, bubbles | 1–4 |
 | **Blacktop Brawl** | Road Rash-style highway racing with cartoon bonks: 4 routes, traffic, gift-box items, hops and ramps | 1–4 + CPU rivals |
 | **Tiki Trail** | Adventure Island-style island run: energy bar and fruit, stone axe, skateboards, secret caves, 3 islands × 3 areas + bosses | 1–2 |
+| **Mighty Yeti** | A Humble Yeti game. Mario-style quest across India with Himu the explorer yeti: Kerala to Kangchenjunga, kindness snowballs, Mighty Meter, friends who help, 6 regions × 2 levels + 3 bosses | 1–4 |
+| **Volt GP** | F1 Race-style electric Grand Prix, behind-the-car 3D on 3 lanes: battery with regen braking and BOOST, Attack Mode, DRS, slipstream, pit stops, safety car, start lights, 8 tracks (Monaco, Singapore at night, Silverstone, Monza, Suzuka, Spa, Buddh, Hyderabad), quick race or championship | 1–4 + CPU rivals |
 
 More on the way. Every game has a Kids mode and works online. All characters, levels, art and music are original.
 
@@ -29,6 +31,8 @@ public/                   the website (Cloudflare Pages serves this folder)
   hop.html, games/hop.js
   brawl.html, games/brawl.js
   tiki.html, games/tiki.js
+  yeti.html, games/yeti.js
+  volt.html, games/volt.js
   shared/core.js          engine: controllers, sound, music, menus, names, lobby, resolution
   shared/net.js           online rooms: host/guest, invite links, reconnect, smooth motion
   shared/core.css, shared/fonts.css, sw.js, manifest.webmanifest, icons/
