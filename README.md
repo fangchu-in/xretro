@@ -1,6 +1,6 @@
 # xRetro
 
-Arcade classics, reimagined for the whole family. **Play at https://xretro.pages.dev**
+Arcade classics, reimagined for the whole family. **Play at https://YOUR-CLOUDFLARE-PAGE**
 
 - Up to 4 players on one screen: Xbox/PlayStation controllers over Bluetooth, keyboard, TV remote or touch.
 - **Online rooms:** one device hosts and gets a 4-letter code; family anywhere joins with the code or an invite link. Any mix of TV, laptop and phones, and several people can share one screen inside an online game.
@@ -16,7 +16,7 @@ public/                   the website (Cloudflare Pages serves this folder)
   shared/core.js          engine: controllers, sound, music, menus, names, lobby, resolution
   shared/net.js           online rooms: host/guest, invite links, reconnect, smooth motion
   shared/core.css, shared/fonts.css, sw.js, manifest.webmanifest, icons/
-functions/rooms/[code].js xretro.pages.dev/rooms/ABCD  →  the room server
+functions/rooms/[code].js YOUR-CLOUDFLARE-PAGE/rooms/ABCD  →  the room server
 server/                   the room server: a Cloudflare Worker + Durable Object ("xretro-rooms")
 wrangler.toml             Pages config (links the site to the room server)
 ```
@@ -40,12 +40,12 @@ The site is already connected. The room server needs connecting once:
 3. Click **Deploy**. Durable Objects are included in the free plan.
 4. Go to the **xretro** Pages project → Deployments → **Retry deployment** on the latest one, so the site picks up the room server.
 
-Check it: https://xretro.pages.dev/rooms/TEST should show `{"code":"TEST","open":false,...}`.
+Check it: https://YOUR-CLOUDFLARE-PAGE/rooms/TEST should show `{"code":"TEST","open":false,...}`.
 If it says "Online rooms are not switched on yet", step 4 hasn't run.
 
 ## Playing
 
-- **TV:** open https://xretro.pages.dev in the TV's browser app, or connect a laptop by HDMI. Pair controllers to whichever device runs the browser.
+- **TV:** open https://YOUR-CLOUDFLARE-PAGE in the TV's browser app, or connect a laptop by HDMI. Pair controllers to whichever device runs the browser.
 - **Laptop / phone:** just open the link. Phones: hold sideways; on-screen stick + FIRE appear. "Add to Home Screen" makes it an app.
 - **Online:** Tank → Play online → Host. Share the code or the invite link (WhatsApp works). Friends open the link, or use "Join a friend's room" on the home page.
 - **Offline:** copy the `public` folder to a USB stick and open `index.html`. Everything except online rooms works.
