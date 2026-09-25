@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Family Arcade</title>
+<title>xRetro</title>
+<meta name="description" content="Retro arcade games for the whole family. Up to 4 players on one screen or online.">
 <meta name="theme-color" content="#0b0c10">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -39,6 +40,13 @@
   .cab.focus{border-color:var(--amber);box-shadow:0 0 0 4px rgba(245,197,66,.25)}
   .cab.focus .art{border-bottom-color:var(--amber)}
   .cab:focus-visible{outline:3px solid var(--sky);outline-offset:3px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:clamp(8px,1.5vmin,18px)}
+  .tb{appearance:none;cursor:pointer;font-family:var(--display);font-size:clamp(13px,2.2vmin,28px);color:var(--text);background:var(--panel);
+      border:3px solid var(--line);border-radius:8px;padding:.5em 1em;display:flex;align-items:center;gap:.6em}
+  .tb .tb-k{color:var(--muted);font-size:.75em}
+  .tb.join{border-color:var(--teal);color:var(--teal)}
+  .tb.focus{border-color:var(--amber);color:var(--amber);box-shadow:0 0 0 4px rgba(245,197,66,.25)}
+  .marquee h1 .x{color:var(--teal)}
   .foot{color:var(--muted);font-size:clamp(12px,1.8vmin,22px);line-height:1.6}
   @media (prefers-reduced-motion:no-preference){ .cab{transition:transform .12s,border-color .12s} .cab.focus{transform:translateY(-4px)} }
 </style>
@@ -47,13 +55,18 @@
 <main class="shelf">
   <header class="marquee">
     <div>
-      <h1>FAMILY<br><span>ARCADE</span></h1>
+      <h1><span class="x">x</span>RETRO</h1>
     </div>
     <div>
-      <p>Pick a game with the stick, D-pad, arrow keys or TV remote, then press A or Enter.</p>
+      <p>Arcade classics, reimagined for the whole family. Pick a game with the stick, D-pad, arrow keys or TV remote, then press A or Enter.</p>
       <div class="pads" id="pads"></div>
     </div>
   </header>
+
+  <nav class="toolbar" aria-label="Online">
+    <button class="tb join nav" type="button" id="joinBtn">Join a friend’s room <span class="tb-k">4-letter code</span></button>
+    <button class="tb nav" type="button" id="nameBtn">Your name: <span id="nameVal"></span></button>
+  </nav>
 
   <section class="cabinets" id="cabinets" aria-label="Games">
     <button class="cab" type="button" data-href="tank.html">
@@ -67,37 +80,48 @@
         <g transform="translate(71 6) rotate(180 9 9)"><rect x="0" y="0" width="5" height="18" fill="#17181d"/><rect x="13" y="0" width="5" height="18" fill="#17181d"/><rect x="4" y="2" width="10" height="14" fill="#aab1bb"/><circle cx="9" cy="10" r="4" fill="#d5dbe1"/><rect x="7.5" y="-6" width="3" height="12" fill="#4d535c"/></g>
         <rect x="42" y="30" width="3" height="5" fill="#fff3c4"/>
       </svg></span>
-      <span class="body"><span class="row"><h2>Tank</h2><span class="chip play">Play</span></span><span class="kind">Defend the crystal · 1–4 players, co-op or battle</span></span>
+      <span class="body"><span class="row"><h2>Tank</h2><span class="chip play">Play</span></span><span class="kind">Defend the crystal · 1–4 players · co-op, battle, online</span></span>
     </button>
 
-    <button class="cab soon" type="button" data-soon="Islander">
+    <button class="cab soon" type="button" data-soon="Dirt Dash">
+      <span class="art"><svg viewBox="0 0 160 80" aria-hidden="true">
+        <rect width="160" height="80" fill="#2b4c7e"/><rect y="46" width="160" height="34" fill="#8a5a33"/>
+        <path d="M60 46 L96 26 L112 26 L112 46 Z" fill="#a8703f"/><rect y="46" width="160" height="3" fill="#c98b4f"/>
+        <g transform="translate(100 12) rotate(-18)"><circle cx="0" cy="14" r="6" fill="none" stroke="#17181d" stroke-width="3"/><circle cx="22" cy="14" r="6" fill="none" stroke="#17181d" stroke-width="3"/>
+        <path d="M0 14 L8 6 L18 6 L22 14" stroke="#e2463c" stroke-width="3" fill="none"/><circle cx="11" cy="-1" r="4" fill="#f5c542"/></g>
+        <rect x="14" y="58" width="12" height="3" fill="#f4efe2"/><rect x="40" y="62" width="10" height="3" fill="#f4efe2"/>
+      </svg></span>
+      <span class="body"><span class="row"><h2>Dirt Dash</h2><span class="chip soon">Next up</span></span><span class="kind">Motocross jumps and wheelies (Excitebike-style)</span></span>
+    </button>
+
+    <button class="cab soon" type="button" data-soon="Tiki Trail">
       <span class="art"><svg viewBox="0 0 160 80" aria-hidden="true">
         <rect width="160" height="80" fill="#1b3350"/><circle cx="124" cy="22" r="10" fill="#f5c542"/>
         <rect y="56" width="160" height="24" fill="#1f4f8c"/><ellipse cx="60" cy="58" rx="36" ry="8" fill="#d9b36a"/>
         <path d="M58 58 Q62 38 56 26" stroke="#7a5230" stroke-width="4" fill="none"/>
         <path d="M56 26 q-16 -4 -22 6 M56 26 q14 -8 22 0 M56 26 q-4 -14 8 -16" stroke="#3f8f4a" stroke-width="5" fill="none" stroke-linecap="round"/>
       </svg></span>
-      <span class="body"><span class="row"><h2>Islander</h2><span class="chip soon">Coming soon</span></span><span class="kind">Island platform adventure</span></span>
+      <span class="body"><span class="row"><h2>Tiki Trail</h2><span class="chip soon">Coming soon</span></span><span class="kind">Island adventure (Adventure Island-style)</span></span>
     </button>
 
-    <button class="cab soon" type="button" data-soon="Circus">
+    <button class="cab soon" type="button" data-soon="Big Top">
       <span class="art"><svg viewBox="0 0 160 80" aria-hidden="true">
         <rect width="160" height="80" fill="#2a1830"/>
         <path d="M80 10 L126 56 L34 56 Z" fill="#e2463c"/><path d="M80 10 L96 56 L64 56 Z" fill="#f4efe2"/>
         <rect x="34" y="56" width="92" height="16" fill="#f5c542"/><rect x="72" y="60" width="16" height="12" fill="#2a1830"/>
         <circle cx="80" cy="8" r="3" fill="#f5c542"/>
       </svg></span>
-      <span class="body"><span class="row"><h2>Circus</h2><span class="chip soon">Coming soon</span></span><span class="kind">Jump the fire rings</span></span>
+      <span class="body"><span class="row"><h2>Big Top</h2><span class="chip soon">Coming soon</span></span><span class="kind">Leap the fire rings (Circus Charlie-style)</span></span>
     </button>
 
-    <button class="cab soon" type="button" data-soon="Commando Run">
+    <button class="cab soon" type="button" data-soon="Strike Force">
       <span class="art"><svg viewBox="0 0 160 80" aria-hidden="true">
         <rect width="160" height="80" fill="#14241a"/><rect y="60" width="160" height="20" fill="#3a5a2f"/>
         <path d="M0 60 L30 30 L55 60 Z M50 60 L90 22 L130 60 Z M110 60 L140 36 L160 52 L160 60 Z" fill="#23402a"/>
         <circle cx="120" cy="18" r="6" fill="#ff9f43"/><rect x="36" y="44" width="10" height="16" fill="#7aa8ff"/><rect x="46" y="48" width="14" height="3" fill="#ece6d6"/>
         <rect x="66" y="48" width="6" height="2" fill="#fff3c4"/><rect x="80" y="48" width="6" height="2" fill="#fff3c4"/>
       </svg></span>
-      <span class="body"><span class="row"><h2>Commando Run</h2><span class="chip soon">Coming soon</span></span><span class="kind">Two-player run-and-gun (Contra-style)</span></span>
+      <span class="body"><span class="row"><h2>Strike Force</h2><span class="chip soon">Coming soon</span></span><span class="kind">Two-player run-and-gun (Contra-style)</span></span>
     </button>
 
     <button class="cab soon" type="button" data-soon="Hop Hero">
@@ -111,52 +135,83 @@
       <span class="body"><span class="row"><h2>Hop Hero</h2><span class="chip soon">Coming soon</span></span><span class="kind">Side-scrolling jumper (Mario-style)</span></span>
     </button>
 
-    <button class="cab soon" type="button" data-soon="Grand Prix">
+    <button class="cab soon" type="button" data-soon="Apex GP">
       <span class="art"><svg viewBox="0 0 160 80" aria-hidden="true">
         <rect width="160" height="80" fill="#2f5a2c"/><path d="M60 0 H100 L130 80 H30 Z" fill="#3a3d46"/>
         <path d="M79 0 h2 v10 h-2z M78 20 h4 v12 h-4z M77 44 h6 v14 h-6z M76 66 h8 v14 h-8z" fill="#ece6d6"/>
         <g transform="translate(88 50)"><rect x="0" y="4" width="14" height="20" rx="3" fill="#e2463c"/><rect x="-3" y="6" width="4" height="6" fill="#17181d"/><rect x="13" y="6" width="4" height="6" fill="#17181d"/><rect x="-3" y="16" width="4" height="7" fill="#17181d"/><rect x="13" y="16" width="4" height="7" fill="#17181d"/><rect x="3" y="10" width="8" height="6" fill="#ece6d6"/></g>
       </svg></span>
-      <span class="body"><span class="row"><h2>Grand Prix</h2><span class="chip soon">Coming soon</span></span><span class="kind">Top-down racing (F1 Race-style)</span></span>
+      <span class="body"><span class="row"><h2>Apex GP</h2><span class="chip soon">Coming soon</span></span><span class="kind">Top-down racing (F1 Race-style)</span></span>
     </button>
   </section>
 
-  <p class="foot">Up to 4 players: Xbox or PlayStation controllers over Bluetooth, keyboard (arrows + Space, WASD + F) or touch. Settings like volume and resolution are inside each game.</p>
+  <p class="foot">Up to 4 players on one screen with Xbox or PlayStation controllers over Bluetooth, keyboard (arrows + Space, WASD + F) or touch, and more online: host a room in any game and share the code. Volume, music and resolution are in each game’s Settings.</p>
 </main>
 
 <script src="shared/core.js"></script>
+<script src="shared/net.js"></script>
 <script>
 (function(){
   const A = window.Arcade;
+  const tools = Array.from(document.querySelectorAll('.nav'));
   const cabs = Array.from(document.querySelectorAll('.cab'));
-  let idx = 0;
+  const all = tools.concat(cabs);
+  let idx = tools.length;
   const cols = () => getComputedStyle(document.getElementById('cabinets')).gridTemplateColumns.split(' ').length;
+  const nameVal = document.getElementById('nameVal');
+  const showName = () => { nameVal.textContent = A.Names.device() || 'not set'; };
+  showName();
   function focus(i, quiet){
-    idx = (i + cabs.length) % cabs.length;
-    cabs.forEach((c, k) => c.classList.toggle('focus', k === idx));
+    idx = Math.max(0, Math.min(all.length - 1, i));
+    all.forEach((c, k) => c.classList.toggle('focus', k === idx));
     if(!quiet) A.Sound.play('move');
-    cabs[idx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    all[idx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+  function move(dx, dy){
+    const T = tools.length, n = cols();
+    if(idx < T){
+      if(dx) focus(Math.max(0, Math.min(T - 1, idx + dx)));
+      else if(dy > 0) focus(T);
+      return;
+    }
+    const c = idx - T;
+    if(dx) focus(T + (c + dx + cabs.length) % cabs.length);
+    else if(dy < 0) focus(c - n < 0 ? 0 : T + c - n);
+    else if(dy > 0 && c + n < cabs.length) focus(T + c + n);
+  }
+  function join(){
+    if(!A.Net.available()){ A.toast('Online rooms work from xretro.pages.dev'); return; }
+    A.Online.codeEntry(code => {
+      A.toast('Looking for room ' + code + '…');
+      fetch('rooms/' + code).then(r => r.json()).then(info => {
+        if(info.open && info.game){ A.Sound.play('online'); location.href = info.game + '.html?room=' + code; }
+        else { A.Sound.play('back'); A.toast('No game with code ' + code + ' right now. Check the letters with the host.', 4000); }
+      }).catch(() => A.toast('Could not reach the xRetro server. Check the internet connection.', 4000));
+    }, () => {});
   }
   function open(i){
-    const c = cabs[i];
+    const c = all[i];
+    if(c.id === 'joinBtn'){ A.Sound.play('confirm'); join(); return; }
+    if(c.id === 'nameBtn'){ A.Sound.play('confirm'); A.Online.askName(() => showName(), () => {}); return; }
     if(c.dataset.href){ A.Sound.play('confirm'); setTimeout(() => { location.href = c.dataset.href; }, 120); }
-    else { A.Sound.play('back'); A.toast(c.dataset.soon + ' is next on the build list.'); }
+    else { A.Sound.play('back'); A.toast(c.dataset.soon + ' is on the build list.'); }
   }
-  cabs.forEach((c, i) => {
+  all.forEach((c, i) => {
     c.tabIndex = -1;
     c.addEventListener('click', () => { focus(i, true); open(i); });
     c.addEventListener('pointerenter', e => { if(e.pointerType === 'mouse') focus(i, true); });
   });
-  focus(0, true);
+  focus(idx, true);
   const padsEl = document.getElementById('pads');
   let lastPads = '';
+  A.Music.play(A.THEMES.menu);
   function step(){
-    const n = cols();
+    if(A.TextEntry.isOpen()){ A.TextEntry.update(); return; }
     for(const s of A.Input.all()){
-      if(A.Input.pressed(s, 'left')) focus(idx - 1);
-      else if(A.Input.pressed(s, 'right')) focus(idx + 1);
-      else if(A.Input.pressed(s, 'up')) focus(idx - n);
-      else if(A.Input.pressed(s, 'down')) focus(idx + n);
+      if(A.Input.pressed(s, 'left')) move(-1, 0);
+      else if(A.Input.pressed(s, 'right')) move(1, 0);
+      else if(A.Input.pressed(s, 'up')) move(0, -1);
+      else if(A.Input.pressed(s, 'down')) move(0, 1);
       else if(A.Input.pressed(s, 'fire')){ open(idx); break; }
     }
     const pads = A.Input.pads().map(p => p.label).join(' · ');

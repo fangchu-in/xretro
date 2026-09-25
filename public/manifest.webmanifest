@@ -1,7 +1,7 @@
 {
-  "name": "Family Arcade",
-  "short_name": "Arcade",
-  "description": "Retro-style games for the whole family. Controllers, keyboard and touch.",
+  "name": "xRetro",
+  "short_name": "xRetro",
+  "description": "Retro-style arcade games for the whole family. Controllers, keyboard and touch.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",

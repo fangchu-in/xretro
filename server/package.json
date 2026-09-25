@@ -1,0 +1,6 @@
+{
+  "name": "xretro-rooms",
+  "private": true,
+  "scripts": { "dev": "wrangler dev", "deploy": "wrangler deploy" },
+  "devDependencies": { "wrangler": "^4.39.0" }
+}

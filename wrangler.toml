@@ -1,0 +1,11 @@
+# Cloudflare Pages config for xretro.pages.dev (static site in ./public + ./functions).
+# The ROOMS binding connects /rooms/ABCD to the online-rooms Durable Object,
+# which lives in the separate "xretro-rooms" Worker (see ./server).
+name = "xretro"
+pages_build_output_dir = "./public"
+compatibility_date = "2026-09-01"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+script_name = "xretro-rooms"

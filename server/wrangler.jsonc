@@ -1,0 +1,13 @@
+// xRetro online rooms: a tiny Worker + Durable Object that relays messages
+// between the host's browser and guests. Deployed by Cloudflare Workers Builds
+// from this folder (root directory: server) on every push to main.
+{
+  "name": "xretro-rooms",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "Room" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }],
+  "observability": { "enabled": true }
+}

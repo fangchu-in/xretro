@@ -1,77 +1,69 @@
-# Family Arcade
+# xRetro
 
-Retro-style games for the family, playable on a TV (via Raspberry Pi or laptop), a Windows laptop, and phones.
-Up to 4 players with Xbox/PlayStation controllers, keyboard, TV remote or touch.
+Arcade classics, reimagined for the whole family. **Play at https://xretro.pages.dev**
 
-Everything is plain HTML + JavaScript. There is no build step and nothing to install.
+- Up to 4 players on one screen: Xbox/PlayStation controllers over Bluetooth, keyboard, TV remote or touch.
+- **Online rooms:** one device hosts and gets a 4-letter code; family anywhere joins with the code or an invite link. Any mix of TV, laptop and phones, and several people can share one screen inside an online game.
+- Drop-in: someone new picks up a controller mid-game and presses FIRE to join.
+- Original music and sound effects, all generated in code. No audio files, works offline.
+
+Plain HTML + JavaScript. No build step.
 
 ```
-public/                 ← the whole website (this is what gets hosted or copied to a USB stick)
-  index.html            ← game picker
-  tank.html             ← Tank
-  games/tank.js         ← Tank game code
-  shared/core.js        ← shared engine: controllers, sound, menus, "press A to join", resolution
-  shared/core.css       ← shared look
-  shared/fonts.css      ← fonts embedded, so it works offline
-  sw.js, manifest.webmanifest, icons/   ← lets phones "install" it and play offline
-tools/pi-kiosk.sh       ← start the arcade full screen on a Raspberry Pi
-wrangler.jsonc          ← Cloudflare config
+public/                   the website (Cloudflare Pages serves this folder)
+  index.html              game picker + "Join a friend's room"
+  tank.html, games/tank.js
+  shared/core.js          engine: controllers, sound, music, menus, names, lobby, resolution
+  shared/net.js           online rooms: host/guest, invite links, reconnect, smooth motion
+  shared/core.css, shared/fonts.css, sw.js, manifest.webmanifest, icons/
+functions/rooms/[code].js xretro.pages.dev/rooms/ABCD  →  the room server
+server/                   the room server: a Cloudflare Worker + Durable Object ("xretro-rooms")
+wrangler.toml             Pages config (links the site to the room server)
 ```
 
-## Play it right now
+## How deploys work
 
-- **Windows laptop:** open `public/index.html` in Chrome, Edge or Firefox. Plug the laptop into the TV by HDMI for the big screen.
-- **USB stick:** copy the whole `public` folder, not just one file. It works offline from a stick or SD card.
-- **Phone:** use the online link (below). Hold the phone sideways. On-screen stick + FIRE button appear automatically.
+Pushing to `main` on GitHub deploys everything automatically:
 
-## Put it online (GitHub + Cloudflare, free)
+- **Site** → Cloudflare Pages project `xretro` (connected to this repo).
+- **Room server** → Cloudflare Worker `xretro-rooms`, built from the `server/` folder (Workers Builds, connected to this repo).
 
-1. Create a GitHub repository called `family-arcade` and upload this folder (GitHub Desktop, or drag the files onto the GitHub web page).
-2. In the Cloudflare dashboard: **Workers & Pages → Create → Pages → Connect to Git**, pick the repository.
-   - Framework preset: **None**
-   - Build command: *(leave empty)*
-   - Build output directory: **public**
-3. Deploy. You get a link like `https://family-arcade.pages.dev`. Every time you push to GitHub, the site updates in about a minute.
+### One-time setup for online rooms (about 2 minutes)
 
-(If you'd rather use a Cloudflare Worker instead of Pages, `wrangler.jsonc` is already set up: `npx wrangler deploy`.)
+The site is already connected. The room server needs connecting once:
 
-After the first visit, the site keeps working offline (the service worker caches it). On Android, Chrome's menu → **Add to Home screen** gives it an app icon and full-screen mode.
+1. Cloudflare dashboard → **Workers & Pages → Create → Import a repository** → pick `fangchu-in/xretro`.
+2. Settings on the next screen:
+   - Project name: **xretro-rooms**
+   - **Root directory: `server`** (under Advanced settings)
+   - Build command: *(leave empty)* · Deploy command: `npx wrangler deploy`
+3. Click **Deploy**. Durable Objects are included in the free plan.
+4. Go to the **xretro** Pages project → Deployments → **Retry deployment** on the latest one, so the site picks up the room server.
 
-## Raspberry Pi as a games console
+Check it: https://xretro.pages.dev/rooms/TEST should show `{"code":"TEST","open":false,...}`.
+If it says "Online rooms are not switched on yet", step 4 hasn't run.
 
-The Pi Zero 2W will run it, but it only has 512 MB of memory, so expect it to lower the resolution by itself (Settings → Resolution → Auto). A Raspberry Pi 4 or 5 runs it smoothly. A laptop over HDMI is the best free option.
+## Playing
 
-1. Install **Raspberry Pi OS (Bookworm)** with desktop, using Raspberry Pi Imager.
-2. **Set the TV output to 1080p, not 4K.** The TV upscales 1080p cleanly and the games are drawn as sharp shapes, so it still looks crisp.
-   Add this to the end of the single line in `/boot/firmware/cmdline.txt`:
-   `video=HDMI-A-1:1920x1080@60`
-3. **Sound over HDMI:** `sudo raspi-config` → System Options → Audio → HDMI. Then turn the TV volume up and set the in-game volume in Settings.
-4. **Pair the controllers:** Bluetooth icon → Add device, hold the controller's pair button. (Update Xbox controllers' firmware from an Xbox or the Windows "Xbox Accessories" app first if they won't pair.)
-5. Copy `tools/pi-kiosk.sh` to the Pi, make it runnable (`chmod +x pi-kiosk.sh`) and start it at boot by adding this line to `~/.config/labwc/autostart`:
-   `/home/pi/pi-kiosk.sh https://family-arcade.pages.dev &`
-   For the offline copy on the SD card, pass `file:///home/pi/family-arcade/public/index.html` instead.
+- **TV:** open https://xretro.pages.dev in the TV's browser app, or connect a laptop by HDMI. Pair controllers to whichever device runs the browser.
+- **Laptop / phone:** just open the link. Phones: hold sideways; on-screen stick + FIRE appear. "Add to Home Screen" makes it an app.
+- **Online:** Tank → Play online → Host. Share the code or the invite link (WhatsApp works). Friends open the link, or use "Join a friend's room" on the home page.
+- **Offline:** copy the `public` folder to a USB stick and open `index.html`. Everything except online rooms works.
 
-## Sony Bravia TV
+## Adding a game
 
-Recent Bravias run Google TV / Android TV. The built-in USB player can't open `.html` files, so a USB stick in the TV won't work.
-You can try installing a browser app from the Play Store (for example "TV Bro") and opening the online link. Whether it passes Bluetooth controller input through to web pages depends on the app, so test it before relying on it.
+1. Copy `tank.html` → `mygame.html`, point it at `games/mygame.js`, load `shared/core.js` and `shared/net.js`.
+2. Build on `window.Arcade`: `Lobby.open`, `Input.get(player.source)`, `Sound.play`, `Music.play(song)`, `Menu.open`, `new Display(canvas, 384, 216)`.
+3. Online: the host sends a snapshot of the game ~30 times a second with `Net.broadcast`; guests draw it. Mark end-of-round menus `shared: true` so everyone sees them. See `games/tank.js` (search "Online").
+4. Add a card in `index.html`, add the files to `CORE` in `sw.js`, bump `VERSION`, push.
 
-## Adding the next game
+## Local development
 
-1. Copy `tank.html` to e.g. `circus.html` and point it at `games/circus.js`.
-2. Build the game using `window.Arcade` from `shared/core.js`:
-   - `Arcade.Lobby.open({...})` gives you the "press A to join" screen and returns the players.
-   - `Arcade.Input.get(player.source)` gives `up/down/left/right/fire/dir` for that player's controller, keyboard or touch.
-   - `Arcade.Sound.play('explode')` etc. for sound effects; `Arcade.Menu.open({...})` for controller-friendly menus.
-   - `new Arcade.Display(canvas, 384, 216)` handles sharp scaling from phone to 4K and drops resolution on slow devices.
-3. Add a card for it in `index.html`, add its files to `CORE` in `sw.js`, and bump `VERSION`.
-
-## Coming next: online multiplayer
-
-Plan: a small Cloudflare Worker with a Durable Object acting as a "room". One device hosts the game; others join with a 4-letter room code from anywhere.
-Each remote player's controller input is sent to the host, and the host sends back the game state. The game code already treats every player as an input source, so a remote player is just one more source.
+```bash
+cd server && npm install && npx wrangler dev          # room server on :8787
+cd .. && server/node_modules/.bin/wrangler pages dev   # site + /rooms on :8788
+```
 
 ## Credits
 
-Fonts: Silkscreen and Chakra Petch, SIL Open Font License 1.1 (`public/shared/fonts/`).
-All game art, levels and sounds are original and generated in code.
+Fonts: Silkscreen and Chakra Petch, SIL Open Font License 1.1. All game art, levels, music and sounds are original and generated in code.

@@ -1,10 +1,10 @@
 /* Offline support: after one visit, the arcade keeps working without internet.
    Network first (so updates show up straight away), cached copy when offline.
    Bump VERSION when you add a game so old caches are cleared. */
-const VERSION = 'arcade-v1';
+const VERSION = 'xretro-v2';
 const CORE = [
   './', './index.html', './tank.html', './games/tank.js',
-  './shared/core.js', './shared/core.css', './shared/fonts.css',
+  './shared/core.js', './shared/net.js', './shared/core.css', './shared/fonts.css',
   './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'
 ];
 self.addEventListener('install', e => {
@@ -15,7 +15,8 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if(req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  const url = new URL(req.url);
+  if(req.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/rooms/')) return;   // online rooms are always live
   e.respondWith(
     fetch(req).then(res => {
       if(res.ok){ const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }

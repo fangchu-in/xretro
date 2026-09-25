@@ -2,8 +2,21 @@
    Original artwork and levels, drawn with vectors so it stays sharp at any resolution. */
 (function(){
 'use strict';
-const A = window.Arcade;
-const S = name => { if(!G.demo) A.Sound.play(name); };
+const A = window.Arcade, Net = A.Net;
+let netSfx = [];
+const S = name => { if(G.demo) return; A.Sound.play(name); if(Net && Net.role === 'host' && netSfx.length < 24) netSfx.push(name); };
+
+/* Music: an original march for battle, the xRetro theme for menus. */
+const TANK_THEME = {
+  bpm: 138, chords: ['Dm', 'Dm', 'Bb', 'C', 'Dm', 'Dm', 'Bb', 'A'], bass: 'drive', arp: 'slow', leadVol: 0.07,
+  lead: [
+    'D5 - - - A4 - D5 - F5 - E5 - D5 - C5 -', 'D5 - - - - - . . A4 - A4 - D5 - F5 -',
+    'G5 - - - F5 - D5 - Bb4 - D5 - F5 - G5 -', 'A5 - - - G5 - E5 - C5 - - - E5 - G5 -',
+    'A5 - - - F5 - A5 - D6 - - - C6 - A5 -', 'F5 - D5 - A4 - D5 - F5 - - - E5 - D5 -',
+    'D5 - - - Bb4 - D5 - F5 - G5 - A5 - Bb5 -', 'A5 - - - - - - - C#5 - - - E5 - - -'],
+  drums: ['k.h.s.hkk.h.s.hs', 'k.h.s.hkk.h.s.h.', 'k.h.s.hkk.h.s.hs', 'k.hks.hkk.hssxss']
+};
+const BATTLE_THEME = Object.assign({}, TANK_THEME, { bpm: 150, bass: 'gallop', arp: 'fast' });
 
 /* ---------- World constants ---------- */
 const VW = 384, VH = 216;           // virtual screen (16:9)
@@ -152,14 +165,16 @@ const G = {
   demo: true, time: 0, stateT: 0, grid: new Uint8Array(F * F), water: [], players: [], tanks: [], bullets: [],
   powerups: [], fx: [], popups: [], spawns: [], base: { hp: 1, dead: false, flash: 0 },
   fortressT: 0, freezeT: 0, roster: [], total: 0, spawned: 0, spawnTimer: 0, spawnPoint: 0,
-  clearT: -1, shake: 0, vsTarget: 5, vsPowerT: 8, winner: null, dirty: [], cacheStale: true, flashT: 0
+  clearT: -1, shake: 0, vsTarget: 5, vsPowerT: 8, winner: null, dirty: [], cacheStale: true, flashT: 0,
+  net: null, netDirty: [], netFull: true
 };
+let nextId = 1;
 if(!DIFF[G.diff]) G.diff = 'normal';
 const D = () => DIFF[G.diff];
 
 /* ---------- Map helpers ---------- */
 const at = (x, y) => (x < 0 || y < 0 || x >= F || y >= F) ? -1 : G.grid[y * F + x];
-function setB(x, y, v){ if(x < 0 || y < 0 || x >= F || y >= F) return; const i = y * F + x; if(G.grid[i] !== v){ G.grid[i] = v; G.dirty.push(i); } }
+function setB(x, y, v){ if(x < 0 || y < 0 || x >= F || y >= F) return; const i = y * F + x; if(G.grid[i] !== v){ G.grid[i] = v; G.dirty.push(i); if(G.net === 'host') G.netDirty.push(i, v); } }
 const RING = []; // wall around the crystal
 for(let y = 46; y < 52; y++) for(let x = 22; x < 30; x++) if(!(x >= 24 && x < 28 && y >= 48)) RING.push([x, y]);
 
@@ -202,7 +217,7 @@ const EPAL = {
 };
 
 function makePlayer(lp){
-  return { slot: lp.slot, source: lp.source, color: lp.color, pal: paletteOf(lp.color), name: 'P' + (lp.slot + 1),
+  return { slot: lp.slot, source: lp.source, color: lp.color, pal: paletteOf(lp.color), name: lp.name || 'P' + (lp.slot + 1),
     lives: D().lives - 1, level: D().startLevel, score: 0, kills: { basic: 0, fast: 0, power: 0, armor: 0 },
     tank: null, respawnT: 0, out: false, vs: 0, nextLife: 20000, stageScore: 0 };
 }
@@ -215,13 +230,13 @@ function spawnPlayer(p){
   G.spawns.push({ x: sp[0], y: sp[1], dir: sp[2], t: 0.6, kind: 'player', player: p });
 }
 function makePlayerTank(p, x, y, dir){
-  const t = { kind: 'player', player: p, x, y, dir, size: 4, speed: G.diff === 'kids' ? 10 : 10.5, alive: true,
+  const t = { id: nextId++, kind: 'player', player: p, x, y, dir, size: 4, speed: G.diff === 'kids' ? 10 : 10.5, alive: true,
     shield: G.mode === 'versus' ? 2 : D().spawnShield, stun: 0, cool: 0, active: 0, anim: 0, moving: false, slide: 0, labelT: 3, flash: 0 };
   applyLevel(t); p.tank = t; G.tanks.push(t); return t;
 }
 function makeEnemy(etype, x, y, carrier){
   const e = ETYPE[etype], loop = Math.floor((G.stage - 1) / STAGES.length);
-  const t = { kind: 'enemy', etype, x, y, dir: 2, size: 4, speed: e.speed * D().enemySpeed * (1 + loop * 0.08), alive: true,
+  const t = { id: nextId++, kind: 'enemy', etype, x, y, dir: 2, size: 4, speed: e.speed * D().enemySpeed * (1 + loop * 0.08), alive: true,
     hp: e.hp, carrier, bulletSpeed: e.bullet, maxBullets: 1, power: 0, cool: 0.6, active: 0, anim: 0, moving: true,
     shield: 0, stun: 0, ai: { t: 0.4 + Math.random() }, flash: 0 };
   G.tanks.push(t); return t;
@@ -284,7 +299,7 @@ function areaClear(x, y){ return !G.tanks.some(t => t.alive && overlap(x, y, 4, 
 function fire(t){
   if(t.cool > 0 || t.active >= t.maxBullets || !t.alive) return;
   const [dx, dy] = DIRV[t.dir];
-  G.bullets.push({ x: t.x + 2 + dx * 2, y: t.y + 2 + dy * 2, dir: t.dir, speed: t.bulletSpeed, owner: t, power: t.power, alive: true });
+  G.bullets.push({ id: nextId++, x: t.x + 2 + dx * 2, y: t.y + 2 + dy * 2, dir: t.dir, speed: t.bulletSpeed, owner: t, power: t.power, alive: true });
   t.active++; t.cool = t.kind === 'player' ? 0.16 : 0.35;
   if(t.kind === 'player') S('shoot');
 }
@@ -549,7 +564,7 @@ function loadStage(){
   G.roster = G.mode === 'coop' ? makeRoster(G.stage) : []; G.total = G.roster.length; G.spawned = 0; G.spawnTimer = 0.2; G.spawnPoint = 0;
   G.stageName = def.name;
   for(const p of G.players){ p.tank = null; p.respawnT = 0; p.out = false; p.stageScore = 0; p.kills = { basic: 0, fast: 0, power: 0, armor: 0 }; if(p.lives < 0) p.lives = 0; }
-  G.cacheStale = true;
+  G.cacheStale = true; G.netFull = true; G.netDirty = [];
 }
 function startDemo(){
   G.demo = true; G.mode = 'coop'; G.players = []; G.stage = 1 + Math.floor(Math.random() * 3);
@@ -565,16 +580,25 @@ function newGame(mode, lobbyPlayers){
 function startIntro(){ A.Menu.close(); G.state = 'intro'; G.stateT = 0; S('stageStart'); }
 function startGameOver(){ if(G.state !== 'play') return; G.state = 'overAnim'; G.stateT = 0; setTimeout(() => S('gameOver'), 600); }
 function startVsWin(p){ if(G.state !== 'play') return; G.winner = p; G.state = 'vsAnim'; G.stateT = 0; S('win'); }
+const hosting = () => G.net === 'host';
+const fromGuest = src => !!(src && src.kind === 'net');
 function pause(){
   if(G.state !== 'play') return;
   G.state = 'paused'; S('pause');
-  A.Menu.open({ center: true, kicker: G.mode === 'coop' ? 'Stage ' + G.stage + ' · ' + G.stageName : 'Battle', title: 'Paused', start: 0,
-    items: [
-      { label: 'Resume', select: resume },
-      { label: 'Settings', select: () => settingsMenu(pauseAgain) },
-      { label: G.mode === 'coop' ? 'Restart this stage' : 'Restart battle', select: restartStage },
-      { label: 'Quit to title', select: toTitle }
-    ], back: resume });
+  const items = [
+    { label: 'Resume', select: resume },
+    { label: G.mode === 'coop' ? 'Restart this stage' : 'Restart battle', select: () => restartStage() }
+  ];
+  if(hosting()){
+    items.push({ label: 'Room lobby: team up', select: () => openLobby('coop', null) });
+    items.push({ label: 'Room lobby: battle', select: () => openLobby('versus', null) });
+    items.push({ label: 'Settings (host)', select: src => { if(!fromGuest(src)) settingsMenu(pauseAgain); } });
+    items.push({ label: 'Leave the room', select: src => leaveRoom(src, pauseAgain) });
+  } else {
+    items.push({ label: 'Settings', select: () => settingsMenu(pauseAgain) });
+    items.push({ label: 'Quit to title', select: toTitle });
+  }
+  A.Menu.open({ center: true, shared: true, kicker: G.mode === 'coop' ? 'Stage ' + G.stage + ' · ' + G.stageName : 'Battle', title: 'Paused', start: 0, items, back: resume });
 }
 function pauseAgain(){ G.state = 'play'; pause(); }
 function resume(){ A.Menu.close(); G.state = 'play'; }
@@ -586,7 +610,23 @@ function restartStage(resetScore){
   }
   loadStage(); startIntro();
 }
-function toTitle(){ A.Menu.close(); A.Lobby.close(); G.players = []; startDemo(); G.state = 'title'; titleMenu(); }
+function toTitle(){
+  A.Menu.close(); A.Lobby.close(); A.Mirror.hide(); buf.clear();
+  if(G.net === 'host' || G.net === 'guest') Net.close();
+  G.net = null; G.players = []; startDemo(); G.state = 'title'; titleMenu();
+}
+/* Host: anyone online picking "Leave" just leaves; the host closing ends it for everyone. */
+function leaveRoom(src, back){
+  if(fromGuest(src)){
+    const peer = Net.peerOf(src.id);
+    Net.kick(peer, 'kicked'); A.Input.Remote.disconnect(peer + '/');
+    return;
+  }
+  A.Menu.open({ center: true, shared: false, kicker: 'Room ' + Net.code, title: 'Close the room?', text: 'Everyone playing online will be sent back to their title screen.',
+    items: [{ label: 'Keep playing', select: back }, { label: 'Close the room', select: toTitle }], back });
+}
+const endLabel = () => hosting() ? 'Back to room lobby' : 'Quit to title';
+const endAction = mode => () => hosting() ? openLobby(mode, null) : toTitle();
 function teamScore(){ return G.players.reduce((a, p) => a + p.score, 0); }
 function saveHigh(){
   const key = 'tank.hi.' + G.diff, best = A.Store.get(key, 0), now = teamScore();
@@ -602,38 +642,55 @@ function showTally(){
   const newBest = saveHigh();
   const rows = G.players.map(p => {
     const k = p.kills, n = k.basic + k.fast + k.power + k.armor;
-    return '<b style="color:' + p.color + '">' + p.name + '</b> · ' + n + ' tanks · ' + p.stageScore.toLocaleString() + ' pts' + (p === mvp ? ' · <b>top tank +1000</b>' : '');
+    return '<b style="color:' + p.color + '">' + A.esc(p.name) + '</b> · ' + n + ' tanks · ' + p.stageScore.toLocaleString() + ' pts' + (p === mvp ? ' · <b>top tank +1000</b>' : '');
   }).join('<br>');
-  A.Menu.open({ center: true, kicker: 'Stage ' + G.stage + ' · ' + G.stageName, title: 'Stage clear!',
+  A.Menu.open({ center: true, shared: true, kicker: 'Stage ' + G.stage + ' · ' + G.stageName, title: 'Stage clear!',
     text: rows + '<br><br>Team score <b>' + teamScore().toLocaleString() + '</b>' + (newBest ? ' · <b>new best!</b>' : ''),
     items: [
       { label: 'Next stage', select: () => { G.stage++; loadStage(); startIntro(); } },
-      { label: 'Quit to title', select: toTitle }
+      { label: endLabel(), select: endAction('coop') }
     ] });
 }
 function showGameOver(){
   G.state = 'over';
   const newBest = saveHigh(), best = A.Store.get('tank.hi.' + G.diff, 0);
-  A.Menu.open({ center: true, kicker: 'Stage ' + G.stage + ' · ' + DIFF[G.diff].label, title: 'Game over',
+  const items = [
+    { label: 'Try this stage again', select: () => restartStage(true) },
+    { label: hosting() ? 'Back to room lobby' : 'Change players', select: () => openLobby('coop', null) }
+  ];
+  if(!hosting()) items.push({ label: 'Quit to title', select: toTitle });
+  A.Menu.open({ center: true, shared: true, kicker: 'Stage ' + G.stage + ' · ' + DIFF[G.diff].label, title: 'Game over',
     text: (G.base.dead ? 'The crystal was destroyed.' : 'Every tank is out of lives.') +
           '<br>Team score <b>' + teamScore().toLocaleString() + '</b> · Best <b>' + best.toLocaleString() + '</b>' + (newBest ? ' · new best!' : '') +
           (G.diff !== 'kids' ? '<br>Tip: Kids difficulty gives unlimited lives and a tougher crystal.' : ''),
-    items: [
-      { label: 'Try this stage again', select: () => restartStage(true) },
-      { label: 'Change players', select: () => openLobby('coop', null) },
-      { label: 'Quit to title', select: toTitle }
-    ] });
+    items });
 }
 function showVsWin(){
   G.state = 'vsover';
   const p = G.winner;
-  A.Menu.open({ center: true, kicker: 'Battle', title: p.name + ' wins!',
-    text: G.players.map(q => '<b style="color:' + q.color + '">' + q.name + '</b> ' + q.vs).join(' · '),
-    items: [
-      { label: 'Rematch', select: () => { for(const q of G.players){ q.vs = 0; q.level = 0; } loadStage(); startIntro(); } },
-      { label: 'Change players', select: () => openLobby('versus', null) },
-      { label: 'Quit to title', select: toTitle }
-    ] });
+  const items = [
+    { label: 'Rematch', select: () => { for(const q of G.players){ q.vs = 0; q.level = 0; } loadStage(); startIntro(); } },
+    { label: hosting() ? 'Back to room lobby' : 'Change players', select: () => openLobby('versus', null) }
+  ];
+  if(!hosting()) items.push({ label: 'Quit to title', select: toTitle });
+  A.Menu.open({ center: true, shared: true, kicker: 'Battle', title: A.esc(p.name) + ' wins!',
+    text: G.players.map(q => '<b style="color:' + q.color + '">' + A.esc(q.name) + '</b> ' + q.vs).join(' · '), items });
+}
+/* Drop-in: pick up a spare controller (or join online) during a game and you're in. */
+function dropIn(){
+  if(G.demo || G.players.length >= 4) return;
+  for(const s of A.Input.all()){
+    if(!A.Input.pressed(s, 'fire') || G.players.some(p => p.source === s.id)) continue;
+    const used = G.players.map(p => p.slot);
+    const slot = [0, 1, 2, 3].find(i => !used.includes(i));
+    const name = s.kind === 'net' && s.name ? s.name : A.Names.forSource(s.id, G.players.map(p => p.name));
+    const p = makePlayer({ slot, source: s.id, color: A.PLAYER_COLORS[slot], name });
+    if(G.mode === 'coop' && p.lives !== Infinity) p.lives = Math.max(1, p.lives);
+    G.players.push(p); G.players.sort((a, b) => a.slot - b.slot);
+    spawnPlayer(p); S('join');
+    addPopup(26, 26, name.toUpperCase() + ' JOINED!', p.color);
+    return;
+  }
 }
 
 /* ---------- Menus ---------- */
@@ -645,11 +702,12 @@ function controllerLine(){
 }
 function titleMenu(){
   G.state = 'title';
-  A.Menu.open({ kicker: 'Family Arcade', title: 'TANK',
-    text: 'Guard the <b>crystal</b> at the bottom of the map. Team up with up to 4 players against waves of enemy tanks, or battle each other.',
+  A.Menu.open({ kicker: 'xRetro', title: 'TANK',
+    text: 'Guard the <b>crystal</b> at the bottom of the map. Team up with up to 4 players against waves of enemy tanks, or battle each other — on one screen or online.',
     items: [
       { label: 'Team up', select: src => openLobby('coop', src) },
       { label: 'Battle each other', select: src => openLobby('versus', src) },
+      { label: 'Play online', select: src => onlineMenu(src) },
       { label: 'Difficulty', value: () => DIFF[G.diff].label, change: d => { const i = DIFF_ORDER.indexOf(G.diff); G.diff = DIFF_ORDER[(i + d + 3) % 3]; A.Store.set('tank.diff', G.diff); } },
       { label: 'Stage', value: () => G.startStage + ' · ' + STAGES[G.startStage - 1].name, change: d => { G.startStage = ((G.startStage - 1 + d + STAGES.length) % STAGES.length) + 1; } },
       { label: 'Settings', select: () => settingsMenu(titleMenu) },
@@ -657,26 +715,71 @@ function titleMenu(){
       { label: 'All games', select: () => { location.href = 'index.html'; } }
     ], footer: controllerLine() });
 }
+function onlineMenu(src, start){
+  G.state = 'online';
+  if(!Net || !Net.available()){
+    A.Menu.open({ center: true, kicker: 'Play online', title: 'Needs the internet',
+      text: 'Online rooms work when the game is opened from <b>xretro.pages.dev</b>, not from a file or USB stick.',
+      items: [{ label: 'Back', select: titleMenu }], back: titleMenu });
+    return;
+  }
+  const who = A.Names.device();
+  A.Menu.open({ center: true, kicker: 'Play online', title: 'Online rooms', start: start || 0,
+    text: 'Play with family and friends anywhere. The host gets a <b>4-letter code</b>; everyone else types it in (or opens the invite link). ' +
+          'Up to 4 players, from any mix of devices. Everyone on one TV can play too.',
+    items: [
+      { label: 'Host: team up', select: s => hostRoom('coop', s) },
+      { label: 'Host: battle', select: s => hostRoom('versus', s) },
+      { label: 'Join with a code', select: () => A.Online.codeEntry(code => joinRoom(code), () => onlineMenu(src, 2)) },
+      { label: 'Your name', value: () => who || 'not set', change: () => A.Online.askName(() => onlineMenu(src, 3), () => onlineMenu(src, 3)) },
+      { label: 'Back', select: titleMenu }
+    ], back: titleMenu });
+}
+function withName(then, back){
+  const n = A.Names.device();
+  if(n) then(n); else A.Online.askName(then, back);
+}
+function hostRoom(mode, src){
+  withName(name => {
+    A.Menu.open({ center: true, kicker: 'Play online', title: 'Opening a room…', items: [] });
+    Net.host('tank', name, netHandlers).then(() => {
+      G.net = 'host'; A.Sound.play('online');
+      openLobby(mode, src);
+    }, why => { A.toast(Net.why(why), 4000); onlineMenu(src); });
+  }, () => onlineMenu(src));
+}
+function joinRoom(code){
+  withName(name => {
+    A.Menu.open({ center: true, kicker: 'Room ' + code, title: 'Joining…', items: [] });
+    Net.join(code, 'tank', name, netHandlers).then(() => {
+      G.net = 'guest'; A.Menu.close(); buf.clear(); A.Sound.play('online');
+      history.replaceState(null, '', location.pathname + '?room=' + code);
+    }, why => {
+      if(String(why).startsWith('other-game:')){ location.href = why.slice(11) + '.html?room=' + code; return; }
+      A.toast(Net.why(why), 4500); onlineMenu(null, 2);
+    });
+  }, () => onlineMenu(null, 2));
+}
 function openLobby(mode, src){
   G.state = 'lobby';
   if(!G.demo) startDemo();
+  const online = hosting();
   A.Lobby.open({
-    kicker: mode === 'coop' ? 'Team up · ' + DIFF[G.diff].label : 'Battle · first to ' + G.vsTarget,
+    kicker: (online ? 'Online · ' : '') + (mode === 'coop' ? 'Team up · ' + DIFF[G.diff].label : 'Battle · first to ' + G.vsTarget),
     title: mode === 'coop' ? 'Who is playing?' : 'Who is battling?',
-    text: mode === 'coop' ? 'Everyone presses FIRE to join, then FIRE again when ready. 1 to 4 players.' : 'Needs 2 to 4 players. Everyone presses FIRE to join, then FIRE again when ready.',
+    text: online ? 'Friends join from any device: open the invite link or pick “Play online → Join with a code”. Everyone presses FIRE to join, then FIRE again when ready.'
+                 : (mode === 'coop' ? 'Everyone presses FIRE to join, then FIRE again when ready. 1 to 4 players.' : 'Needs 2 to 4 players. Everyone presses FIRE to join, then FIRE again when ready.'),
     min: mode === 'coop' ? 1 : 2, max: 4, colors: A.PLAYER_COLORS, initial: src ? src.id : null,
-    onStart: players => newGame(mode, players), onBack: titleMenu
+    room: online ? { code: Net.code, link: Net.inviteLink(Net.code) } : null,
+    backLabel: online ? 'Close room' : 'Back',
+    onStart: players => newGame(mode, players),
+    onBack: online ? () => leaveRoom(null, () => openLobby(mode, null)) : titleMenu
   });
 }
 function settingsMenu(back){
   A.Menu.open({ center: true, kicker: 'Settings', title: 'Settings',
     text: 'Resolution now: ' + display.resolutionLabel() + '. Auto lowers the resolution by itself if the game runs slowly.',
-    items: [
-      { label: 'Volume', value: () => A.Settings.volume + ' / 10', change: d => { A.Settings.volume = Math.max(0, Math.min(10, A.Settings.volume + d)); A.Sound.applyVolume(); A.saveSettings(); A.Sound.play('shoot'); } },
-      { label: 'Resolution', value: () => A.QUALITY_LABELS[A.Settings.quality], change: d => { const o = ['auto', 'high', 'medium', 'low']; A.Settings.quality = o[(o.indexOf(A.Settings.quality) + d + 4) % 4]; A.saveSettings(); display.dyn = 1; display.resize(); } },
-      { label: 'Fullscreen', select: () => A.toggleFullscreen() },
-      { label: 'Back', select: back }
-    ], back });
+    items: A.settingsItems(display).concat([{ label: 'Back', select: back }]), back });
 }
 function helpMenu(back){
   A.Menu.open({ center: true, kicker: 'How to play', title: 'How to play',
@@ -684,25 +787,123 @@ function helpMenu(back){
           'Enemy tanks come from the top. Stop them reaching the <b>crystal</b>. Flashing red tanks drop a power-up when hit.<br>' +
           '<b>Shield</b> 10s invincible · <b>Star</b> stronger gun (level 3 breaks steel) · <b>Bomb</b> clears the screen · ' +
           '<b>Snowflake</b> freezes enemies · <b>Wall</b> steel around the crystal · <b>Tank</b> extra life.<br>' +
-          'Out of lives? Press FIRE to borrow one from a teammate. Kids difficulty: unlimited lives, no friendly fire.',
+          'Out of lives? Press FIRE to borrow one from a teammate. Someone new? They press FIRE mid-game to drop in.',
     items: [{ label: 'Back', select: back }], back });
 }
 
+/* ================= Online ================= */
+const buf = A.SnapBuffer ? new A.SnapBuffer(0.08) : null;
+let netStep = 0, snapSeq = 0;
+const netHandlers = {
+  onPeer(){ G.netFull = true; },
+  onEnd(why){ const msg = Net.why(why); G.net = null; toTitle(); A.toast(msg, 4500); },
+  onReconnect(){ G.netFull = true; },
+  onRename(id, name){ const p = G.players.find(q => q.source === id); if(p) p.name = name; },
+  onMessage(m){ if(m.t === 's') receiveSnap(m); }
+};
+const r2 = v => Math.round(v * 100) / 100;
+const ETYPES = ['basic', 'fast', 'power', 'armor'];
+function gridB64(){ let s = ''; for(let i = 0; i < G.grid.length; i++) s += String.fromCharCode(G.grid[i]); return btoa(s); }
+function sendSnap(){
+  const s = {
+    t: 's', n: ++snapSeq, tm: r2(G.time), st: G.state, sT: r2(G.stateT), m: G.mode, d: G.diff, sg: G.stage, sn: G.stageName, dm: G.demo ? 1 : 0,
+    sh: r2(G.shake), fl: r2(G.flashT), fz: r2(G.freezeT), ft: r2(G.fortressT), b: [G.base.hp, G.base.dead ? 1 : 0, r2(G.base.flash)],
+    ro: G.roster.length, to: G.total, vt: G.vsTarget, w: G.winner ? G.winner.slot : -1,
+    p: G.players.map(p => { const s = A.Input.get(p.source); return [p.slot, p.name, p.color, p.lives === Infinity ? -1 : p.lives, p.level, p.score, p.vs, p.out ? 1 : 0, p.source, s && s.connected ? 1 : 0]; }),
+    k: G.tanks.map(t => [t.id, t.kind === 'player' ? t.player.slot : -1 - ETYPES.indexOf(t.etype), r2(t.x), r2(t.y), t.dir, r2(t.anim), r2(t.shield), r2(t.stun), r2(t.flash), t.carrier ? 1 : 0, t.hp || 0, r2(t.labelT || 0)]),
+    u: G.bullets.map(b => [b.id, r2(b.x), r2(b.y), b.dir, b.owner.kind === 'player' ? 1 : 0]),
+    pu: G.powerups.map(pu => [pu.type, pu.x, pu.y, r2(pu.t)]),
+    x: G.fx.map(f => [r2(f.x), r2(f.y), r2(f.t), f.dur, f.big ? 1 : 0, f.small ? 1 : 0, f.id]),
+    q: G.popups.map(p => [r2(p.x), r2(p.y), p.text, p.color, r2(p.t)]),
+    sp: G.spawns.map(s => [s.x, s.y, r2(s.t), s.kind === 'player' ? s.player.slot : -1])
+  };
+  if(G.netFull){ s.gf = gridB64(); G.netFull = false; G.netDirty = []; }
+  else if(G.netDirty.length){ s.gd = G.netDirty; G.netDirty = []; }
+  if(netSfx.length){ s.sfx = netSfx; netSfx = []; }
+  Net.broadcast(s);
+}
+/* Guest: terrain and sounds apply the moment they arrive; motion is smoothed. */
+let gotGrid = false;
+function receiveSnap(s){
+  if(s.gf){
+    const bin = atob(s.gf); const g = new Uint8Array(F * F);
+    for(let i = 0; i < g.length; i++) g[i] = bin.charCodeAt(i);
+    G.grid = g; G.water = []; for(let i = 0; i < F * F; i++) if(g[i] === T.WATER) G.water.push(i);
+    G.cacheStale = true; gotGrid = true;
+  } else if(s.gd && gotGrid){
+    for(let i = 0; i < s.gd.length; i += 2){ const k = s.gd[i]; if(G.grid[k] !== s.gd[i + 1]){ G.grid[k] = s.gd[i + 1]; G.dirty.push(k); } }
+  }
+  if(s.sfx && !s.dm) for(const n of s.sfx) A.Sound.play(n);
+  buf.push(s);
+}
+const guestPlayers = new Map();
+function guestFrame(dt){
+  const smp = buf.sample(dt); if(!smp) return;
+  const { a, b, t } = smp, s = b;
+  const L = (x, y) => x + (y - x) * t;
+  G.demo = !!s.dm; G.mode = s.m; G.diff = s.d; G.stage = s.sg; G.stageName = s.sn; G.vsTarget = s.vt;
+  G.state = s.st; G.stateT = a.st === b.st ? L(a.sT, b.sT) : b.sT;
+  G.shake = s.sh; G.flashT = s.fl; G.freezeT = s.fz; G.fortressT = s.ft;
+  G.base = { hp: s.b[0], dead: !!s.b[1], flash: s.b[2] };
+  G.total = s.to; G.roster = { length: s.ro };
+  G.players = s.p.map(r => {
+    let p = guestPlayers.get(r[0]);
+    if(!p || p.color !== r[2]){ p = { slot: r[0], color: r[2], pal: paletteOf(r[2]) }; guestPlayers.set(r[0], p); }
+    Object.assign(p, { name: r[1], lives: r[3] < 0 ? Infinity : r[3], level: r[4], score: r[5], vs: r[6], out: !!r[7], source: r[8], online: !!r[9] });
+    return p;
+  });
+  const bySlot = slot => G.players.find(p => p.slot === slot) || { slot, color: '#888', pal: paletteOf('#888888'), name: '?', level: 0 };
+  G.winner = s.w >= 0 ? bySlot(s.w) : null;
+  const prevT = new Map(a.k.map(r => [r[0], r]));
+  G.tanks = s.k.map(r => {
+    const o = prevT.get(r[0]), near = o && Math.abs(o[2] - r[2]) + Math.abs(o[3] - r[3]) < 3;
+    const isP = r[1] >= 0;
+    return { id: r[0], kind: isP ? 'player' : 'enemy', player: isP ? bySlot(r[1]) : null, etype: isP ? null : ETYPES[-1 - r[1]],
+      x: near ? L(o[2], r[2]) : r[2], y: near ? L(o[3], r[3]) : r[3], dir: r[4], anim: near ? L(o[5], r[5]) : r[5],
+      shield: r[6], stun: r[7], flash: r[8], carrier: !!r[9], hp: r[10], labelT: r[11], alive: true, size: 4 };
+  });
+  const prevB = new Map(a.u.map(r => [r[0], r]));
+  G.bullets = s.u.map(r => { const o = prevB.get(r[0]); return { x: o ? L(o[1], r[1]) : r[1], y: o ? L(o[2], r[2]) : r[2], dir: r[3], owner: { kind: r[4] ? 'player' : 'enemy' } }; });
+  G.powerups = s.pu.map(r => ({ type: r[0], x: r[1], y: r[2], t: r[3] }));
+  G.fx = s.x.map(r => ({ x: r[0], y: r[1], t: r[2], dur: r[3], big: !!r[4], small: !!r[5], id: r[6] }));
+  G.popups = s.q.map(r => ({ x: r[0], y: r[1], text: r[2], color: r[3], t: r[4] }));
+  G.spawns = s.sp.map(r => ({ x: r[0], y: r[1], t: r[2], kind: r[3] >= 0 ? 'player' : 'enemy', player: r[3] >= 0 ? bySlot(r[3]) : null }));
+}
+
 /* ---------- Main step ---------- */
-let touchShown = false;
+let touchShown = false, lastMusic = null;
+function music(){
+  let want = null;
+  if(G.demo || G.state === 'title' || G.state === 'lobby' || G.state === 'online') want = A.THEMES.menu;
+  else if(G.state === 'play' || G.state === 'paused') want = G.mode === 'versus' ? BATTLE_THEME : TANK_THEME;
+  if(want !== lastMusic){ lastMusic = want; A.Music.play(want); }
+  A.Music.duck(G.state === 'paused');
+}
 function step(dt){
   G.time += dt;
+  if(G.net === 'guest'){ guestStep(dt); return; }
   const wantTouch = G.state === 'play' && G.players.some(p => p.source === 'touch');
   if(wantTouch !== touchShown){ touchShown = wantTouch; A.Touch.show(wantTouch); }
+  music();
+  if(Net) Net.setPlaying(G.state === 'play' || G.state === 'intro');
+  hostStep(dt);
+  if(G.net === 'host'){
+    Net.hostTick();
+    if(++netStep % 2 === 0 && Net.hasGuests()) sendSnap();
+  }
+}
+function hostStep(dt){
   if(A.Lobby.isOpen()){ A.Lobby.update(); sim(dt); return; }
   if(A.Menu.isOpen()){ A.Menu.update(); if(G.demo) sim(dt); return; }
+  if(A.TextEntry.isOpen()){ A.TextEntry.update(); return; }
   switch(G.state){
     case 'intro':
       G.stateT += dt;
       if(G.stateT >= 2.2){ G.state = 'play'; for(const p of G.players) spawnPlayer(p); }
       break;
     case 'play':
-      if(A.Input.all().some(s => A.Input.pressed(s, 'pause'))){ pause(); return; }
+      if(A.Input.all().some(s => A.Input.pressed(s, 'pause') && (s.kind !== 'net' || G.players.some(p => p.source === s.id)))){ pause(); return; }
+      dropIn();
       sim(dt); break;
     case 'overAnim':
       G.stateT += dt; sim(dt);
@@ -715,7 +916,19 @@ function step(dt){
     case 'title': titleMenu(); break;
   }
 }
-document.addEventListener('visibilitychange', () => { if(document.hidden && G.state === 'play') pause(); });
+function guestStep(){
+  Net.guestTick();
+  const mine = G.players.some(p => p.source === Net.peer + '/touch');
+  const wantTouch = G.state === 'play' && mine && !A.Mirror.ui;
+  if(wantTouch !== touchShown){ touchShown = wantTouch; A.Touch.show(wantTouch); }
+  Net.setPlaying(G.state === 'play' || G.state === 'intro');
+  music();
+}
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden || G.state !== 'play' || G.net === 'guest') return;
+  pause();                                   // a hidden tab stops running, so pause for everyone
+  if(G.net === 'host'){ Net.hostTick(); sendSnap(); }
+});
 
 /* ================= Rendering ================= */
 const canvas = document.getElementById('screen');
@@ -874,6 +1087,12 @@ function drawWater(c){
 function text(c, str, x, y, size, color, align){
   c.font = size + 'px ' + FONT; c.fillStyle = color; c.textAlign = align || 'left'; c.textBaseline = 'top'; c.fillText(str, x, y);
 }
+function fitText(c, str, x, y, size, color, maxW){
+  c.font = size + 'px ' + FONT;
+  const w = c.measureText(str).width;
+  if(w > maxW) size = Math.max(4, size * maxW / w);
+  text(c, str, x, y + (9 - size) / 2, size, color);
+}
 function miniTank(c, x, y, s, color){
   c.fillStyle = color; c.fillRect(x, y + s * 0.3, s, s * 0.7); c.fillRect(x + s * 0.4, y, s * 0.2, s * 0.5);
 }
@@ -905,17 +1124,24 @@ function drawHUD(c){
     text(c, 'POWER-UPS', 14, 50, 5, COL.muted);
     text(c, 'APPEAR OFTEN', 14, 58, 5, COL.muted);
   }
-  if(!G.demo) text(c, 'PAUSE: START / ESC', 14, VH - 20, 4.5, COL.muted);
+  if(!G.demo && !A.Input.isTouch) text(c, 'PAUSE: START / ESC', 14, VH - 20, 4.5, COL.muted);
 
   // right panel: players
   const rx = FX + F * BP + 6, rw = VW - rx - 6;
   c.fillStyle = COL.panel; c.fillRect(rx, 6, rw, VH - 12);
   if(G.demo){ text(c, 'PRESS FIRE', rx + 8, 14, 6, COL.text); text(c, 'TO PLAY', rx + 8, 24, 6, COL.text); return; }
+  if(G.players.length < 4 && (G.state === 'play' || G.state === 'intro')){
+    const y = 12 + G.players.length * 50;
+    if(Math.floor(G.time * 1.5) % 2) text(c, 'FIRE TO JOIN', rx + 12, y + 4, 5, COL.muted);
+  }
   G.players.forEach((p, i) => {
     const y = 12 + i * 50;
     c.fillStyle = p.color; c.fillRect(rx + 6, y, 2, 40);
     miniTank(c, rx + 12, y + 1, 9, p.color);
-    text(c, p.name, rx + 25, y, 9, p.color);
+    fitText(c, p.name, rx + 25, y, 9, p.color, rw - 29);
+    const src = G.net === 'guest' ? null : A.Input.get(p.source);
+    const away = G.net === 'guest' ? p.online === false : !!(src && !src.connected);
+    if(away) text(c, src && src.kind === 'pad' ? 'NO CONTROLLER' : 'OFFLINE', rx + 12, y + 40, 4.5, COL.danger);
     if(G.mode === 'versus'){
       text(c, p.vs + ' / ' + G.vsTarget, rx + 12, y + 14, 9, COL.text);
       for(let k = 0; k < 3; k++){ c.fillStyle = k < p.level ? COL.amber : '#2a2d37'; c.fillRect(rx + 12 + k * 7, y + 30, 5, 5); }
@@ -932,7 +1158,8 @@ function drawHUD(c){
   });
 }
 
-function render(){
+function render(dt){
+  if(G.net === 'guest') guestFrame(dt);
   const c = display.ctx, s = display.scale;
   if(G.cacheStale || !terrain) rebuildCaches();
   flushDirty();
@@ -977,17 +1204,21 @@ function render(){
     text(c, 'GAME OVER', VW / 2, y, 16, COL.danger, 'center');
   }
   if(G.state === 'vsAnim' && G.winner) text(c, G.winner.name + ' WINS!', VW / 2, VH / 2 - 10, 16, G.winner.color, 'center');
-  if(G.demo && (A.Menu.isOpen() || A.Lobby.isOpen())){ c.fillStyle = 'rgba(11,12,16,0.35)'; c.fillRect(0, 0, VW, VH); }
+  if(G.demo && (A.Menu.isOpen() || A.Lobby.isOpen() || A.Mirror.ui)){ c.fillStyle = 'rgba(11,12,16,0.35)'; c.fillRect(0, 0, VW, VH); }
 }
 
 /* ---------- Boot ---------- */
 A.Touch.mount();
 A.registerOffline();
 startDemo();
-const boot = () => { titleMenu(); A.run(step, render, display); };
+const boot = () => {
+  titleMenu(); A.run(step, render, display);
+  const room = (new URLSearchParams(location.search).get('room') || '').toUpperCase();
+  if(/^[A-Z]{4}$/.test(room) && Net && Net.available()) joinRoom(room);
+};
 if(document.fonts && document.fonts.load){
   Promise.race([document.fonts.load('10px "Silkscreen"'), new Promise(r => setTimeout(r, 1500))]).then(boot, boot);
 } else boot();
 window.__tank = G; // handy for debugging in the browser console
-window.__tankDebug = { spawnPowerup, applyPowerup, hitBase, startGameOver, destroyPlayer };
+window.__tankDebug = { spawnPowerup, applyPowerup, hitBase, startGameOver, destroyPlayer, Net };
 })();
