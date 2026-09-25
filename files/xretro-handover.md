@@ -1,6 +1,6 @@
 # xRetro — Project Handover
 
-Last updated: 25 Sep 2026 (night, Blacktop Brawl added). Read this whole file before touching code. Where this file and the code disagree, **the code wins**. Read `public/games/dirt.js` and `public/shared/core.js` before writing a new game.
+Last updated: 25 Sep 2026 (late night, Tiki Trail added). Read this whole file before touching code. Where this file and the code disagree, **the code wins**. Read `public/games/dirt.js` and `public/shared/core.js` before writing a new game.
 
 ---
 
@@ -64,8 +64,8 @@ Always start from `git pull origin main --no-edit`: when GitHub has a commit the
 - `git add .` picks up anything sitting in the folder, so keep downloads (zips, bundles) out of it.
 - The "LF will be replaced by CRLF" warnings on Windows are harmless.
 
-**Current state (25 Sep, night):** GitHub `main` = `60e2113` (public repo: README, handover, rooms origin lock). Hop Hero and Dirt Dash are live and confirmed working by the owner. The stray bundle is gone and `.gitignore` ignores `*.bundle` and `*.zip`. Old merge commits have ugly messages; ignore them.
-Next commit (sent as `blacktop-brawl.zip`): Blacktop Brawl (`public/brawl.html`, `public/games/brawl.js`), its index card, `sw.js` → **`xretro-v6`**, README row, this file. Tested locally, not yet pushed by the owner.
+**Current state (25 Sep, late night):** GitHub `main` = `feb996c` (Add Blacktop Brawl, `sw.js` v6). Tank, Dirt Dash, Hop Hero and Blacktop Brawl are live. `.gitignore` ignores `*.bundle` and `*.zip`. Old merge commits have ugly messages; ignore them.
+Next commit (sent as `tiki-trail.zip`): Tiki Trail (`public/tiki.html`, `public/games/tiki.js`), a small `core.js` music addition (steel-drum lead, calypso bass, bongo/shaker drums), its index card, `sw.js` → **`xretro-v7`**, README row, this file. Tested locally, not yet pushed by the owner.
 
 ---
 
@@ -104,7 +104,7 @@ The repo is going public so anyone can read, fork and enjoy the code. **Nobody e
 ### Engine: `window.Arcade` (public/shared/core.js, 907 lines)
 Exports: `Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Touch, Menu, Lobby, TextEntry, Display, run, toast, keepAwake, toggleFullscreen, goLandscape, registerOffline, settingsItems, shareInvite, el, esc, dom{menuDom,lobbyDom}, PLAYER_COLORS, QUALITY_LABELS`
 - `Sound.play(name)`. Built-in sounds: move select confirm back join online leave pause type shoot brick steel armor explode boom spawn powerAppear powerUp lifeUp freeze bomb stageStart stageClear gameOver win countdown go. Games can add their own (dirt.js has `SX`).
-- `Music.play(song)`, `stop()`, `duck(on)`, `intensity(n)`. A song is a data object (bpm, melody, bass, arp, drums). See `THEMES.menu`, `TANK_THEME`, `DIRT_THEME`. Every game gets its **own original theme**.
+- `Music.play(song)`, `stop()`, `duck(on)`, `intensity(n)`. A song is a data object (bpm, melody, bass, arp, drums). See `THEMES.menu`, `TANK_THEME`, `DIRT_THEME`. Every game gets its **own original theme**. Optional extras (added for Tiki Trail, ignored by older songs): `steel: true` plays the lead as a steel drum (struck partials, long notes rolled), `bass: 'calypso'`, and drum letters `b` high bongo, `l` low bongo, `c` shaker.
 - `Names`: device name, fun random names, `forSource()`. `TextEntry` is an on-screen keyboard that works with a controller.
 - `Lobby.open(cfg)`, `Menu.open(def)` (menus marked `shared:true` show on every online screen), `run(step, render, display)` is the game loop.
 - `Store` saves to localStorage under the prefix `arcade.` (best times, settings).
@@ -120,7 +120,7 @@ Exports: `Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Tou
 ### Adding a game (checklist)
 1. `public/games/<id>.js` + `public/<id>.html` (copy dirt.html, change the title and script)
 2. `public/index.html`: make the card playable (`chip play`, `data-href="<id>.html"`)
-3. `public/sw.js`: add both files to `CORE`, bump `VERSION` (next: `xretro-v7`)
+3. `public/sw.js`: add both files to `CORE`, bump `VERSION` (next: `xretro-v8`)
 4. Test (section 7), then commit/push
 5. Update the README game list and this file
 
@@ -134,7 +134,7 @@ Exports: `Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Tou
 | 2 | **Dirt Dash** | Excitebike | ✅ Live. 1–4 riders + CPU rivals, 4 lanes, 5 tracks (Dusty Hills, Canyon Leap, Monsoon Mud, Night Rally, Himalaya Pro), 2 laps, engine heat, PERFECT landings, rescue hop over walls, overtake callouts, Kids/Normal/Pro, split screen, online |
 | 3 | **Hop Hero** | Super Mario Bros | ✅ Live 25 Sep (owner confirmed). 1–4 co-op, shared camera, bubbles, 3 worlds × 3 levels + 3 bosses (Thornback, Crag Crab, Baron Grumble), Kids/Normal/Pro, drop-in, online, ending |
 | 3b | **Blacktop Brawl** | Road Rash | ✅ Reviewed, reworked and tested 25 Sep; sent as `blacktop-brawl.zip`, waiting for the owner's push. 1–4 riders + CPU rivals, 4 routes, cartoon bonks, gift-box items, hops/ramps, drop-in, Kids/Normal/Pro, split screen, online |
-| 4 | **Tiki Trail** | Adventure Island | 🔜 After Blacktop Brawl |
+| 4 | **Tiki Trail** | Adventure Island | ✅ Built and tested 25 Sep; sent as `tiki-trail.zip`, waiting for the owner's push. 1–2 co-op, shared camera, energy bar + fruit, stone axe, skateboard, secret caves, 3 islands × 3 areas + 3 bosses, Kids/Normal/Pro, drop-in, online |
 | 5 | **Big Top** | Circus Charlie | Later |
 | 6 | **Strike Force** | Contra | Later (2-player co-op run-and-gun, 1 fire button + aim with D-pad) |
 | 7 | **Apex GP** | F1 Race | Later (top-down racing) |
@@ -153,8 +153,18 @@ Started in another chat (Sonnet), then reviewed and largely rewritten here. `pub
 ### Hop Hero (brief)
 Side-scrolling platformer with an original hero (not a plumber). **1–4 player co-op, shared camera** (like New Super Mario Bros): the camera follows the group, and a player who falls behind floats back in a bubble. Fire = jump (hold for higher). Stomp enemies. Coins, a growth power-up (take one extra hit), a star-style invincibility, checkpoint flag, goal pole with height bonus. 3 worlds (e.g. Meadow, Crystal Caves, Sky Castle) × 3 short levels, plus a simple boss at the end of each world. Lives are shared or a respawn bubble (no game-over frustration for kids). Kids Mode: bottomless pits bounce you back. Original bright, major-key theme per world. Online: same pattern as dirt.js.
 
-### Tiki Trail (brief)
-Tropical side-scroller with an original island kid. **1–2 players** (co-op, shared camera). An **energy bar drains over time**; fruit refills it, which pushes you forward. Fire = jump, and the stone axe is thrown with Down+Fire or automatically (see the controls note below). Skateboard power-up: faster, absorbs one hit. Enemies: snails, bees, frogs, rolling rocks, fire. 3 islands (Beach, Jungle, Volcano) × 3–4 short areas + a boss per island. Tropical steel-drum-style chip music.
+### Tiki Trail (done)
+`public/games/tiki.js` (~2500 lines), built on hop.js (same tile map, `moveBody`, shared camera, bubbles, snapshot pattern, bot).
+- **Hero:** an original island kid (topknot, headband and shorts in the player colour, grass skirt, shell necklace). Demo bots are Koa and Lani. Story: Big Bongo ran off with the island **Sunstone**.
+- **Controls:** D-pad runs (hold to sprint), FIRE jumps (hold = higher), **DOWN+FIRE throws the stone axe** (max 2 in the air each). Hold UP on a **vine** to climb, FIRE leaps off. Touch button says JUMP.
+- **Energy:** drains over time (Normal 2.1/s, Pro 2.8, Kids 1.0 with a floor so it never runs out). Fruit refills it (apple/banana 4, grapes 6, pineapple 15, melon 45). Empty = faint. Hits cost 30 energy on Normal, 12 on Kids, a life on Pro. No drain in boss arenas. Goal gate gives energy × 20 bonus. **Trip stones** slow you and cost a little energy; **campfires** hurt.
+- **Eggs:** crack by touch or axe. Spot colour hints the contents: blue = **skateboard** (fast, rolls on, smashes trip stones, takes one hit), orange = **sun charm** (8 s invincible, own music), green = **melon**.
+- **Enemies:** snails, bees (dive at you on Normal/Pro), frogs, rolling rocks (from `R` spawners, jump over or bounce on top, axes clink off), lava blobs hopping out of volcano pits.
+- **Owner's extras, all in:** parallax (far/mid/near layers per island plus a fast foreground at the bottom edge), boss one-liners via `A.toast` on host and guests ("Big Bongo rises from the lava!"), **Tiki Tower** (land on a partner who is standing still for a big launch, can reach the treetops), **Fruit Frenzy** (3 fruits in one jump = ×2 score, 6 = ×3; fruit arcs over gaps), **secret shortcuts**: cracked boulders (`O`/`k` in the map) take 2 axe hits and hide a cave that warps everyone to the matching exit (`Y`) about a third of the level ahead (+2000, checkpoint moves there); jungle **canopy** chunks have a vine up to a fruit-filled treetop path above the harder ground route.
+- **Levels:** 1 Coconut Cove (Sunny Shore, Tidepool Trail, Coral Cliffs, boss **Captain Kelp**: lagoon octopus lobs coconuts, then flops on the beach to rest), 2 Jungle Drums (Banana Grove, Vine Valley, Waterfall Way, boss **Queen Buzzbelle**: calls bees, dives and gets her stinger stuck), 3 Mount Ember (Ashen Path, Magma Steps, Lava Rapids, boss **Big Bongo**: stone tiki, drums down rocks, spits fireballs, hops, then rests). Bosses take axe hits only while exposed/resting; stomping a resting boss = 2 hits. Kids 6 hits, Normal 9, Pro 12.
+- **Music:** steel-drum themes per island + boss, charm and ending themes (all original, in tiki.js).
+- **Online:** host runs everything; map changes (fruit eaten, boulders, crumbling rock) go as mods like Hop Hero. Tested host + guest to boss and clear, guest sees the boss toast.
+- **Tests (25 Sep):** bot runs of all 12 areas finish in god mode and on Kids (no lives lost); 2P runs; Tiki Tower; bubble and pop-back; phone viewport with touch; file://; online host + guest; other games load with zero errors. The bot is weak on rafts/lifts/Kelp on Normal (it loses lives there); that's the bot, not the levels.
 
 > **Settled (Hop Hero):** D-pad runs (hold to sprint), **Fire = jump (hold = higher)**, **Down + Fire = throw** (Hop Hero: sparks with the Zap Flower; Tiki Trail: the axe). Use exactly this in Tiki Trail. `hop.js` has the platformer physics (moveBody, coyote time, jump buffer, corner correction), the shared camera, bubbles and a test bot to reuse.
 
@@ -186,6 +196,7 @@ What has been tested for each game: solo run to the end, 2P and 3–4P split scr
 - **Local test servers:** starting `wrangler dev` and `wrangler pages dev` at the same moment makes them fight over the inspector port ("Address already in use") and `/rooms` returns "Worker not found". Start the rooms Worker with `--inspector-port 9331`, wait ~15 s, then start Pages. Never `pkill -f wrangler` from Claude's shell (it kills the shell itself); find the PIDs with `ps` and kill those.
 - **Test scripts:** in the lobby, FIRE toggles ready on and off, so a test presses it **once** after joining, then waits for the countdown. A guest holding FIRE can't also "press" it: release first, then press. `window.__dirtDebug` / `window.__hopDebug` expose internals for stress tests (e.g. every track × lane × speed must finish).
 - Test scripts live in Claude's scratchpad, which is wiped between sessions. Rewrite them from these notes as needed.
+- Tiki Trail: `window.__tiki` is the state, `window.__tikiDebug` has `loadLevel`, `newGame`, `sim`, `step`, `hurt`, `crackBoulder`, `reachGoal`… Set `p.bot = true` on players to autopilot, `G.god = true` for no damage, `G.botSecret = true` to make bots axe boulders, `G.log = []` to record hurts/falls. Don't put a trip stone or campfire right before a gap, raft or lift (the jump over it lands in the gap).
 - Blacktop Brawl: `window.__brawlDebug` has `newRace`, `sim`, `tumble`, `giveItem`, `finishRace`; setting `window.__brawl.bot = true` makes human riders drive themselves (CPU logic) for stress runs. Stress run 25 Sep: every route × difficulty, 1 and 4 riders, all finish in 37–50 s. Fixed from the original upload: CPU skill speed was never applied (Kids rivals raced at full speed), `Sound.play('finish')` isn't a built-in (now `'win'`), DOWN+FIRE also changed lane, hops had no height, traffic used `Math.random` (guests saw different cars), lane lines were drawn one lane off, near traffic was drawn behind far riders, no drop-in.
 - A different chat can't see this repo unless the owner uploads files. Anything built elsewhere gets reviewed here before it goes in.
 - A game's HUD should not show keyboard hints ("PAUSE: ESC") on touch devices.

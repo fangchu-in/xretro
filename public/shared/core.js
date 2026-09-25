@@ -182,7 +182,16 @@ const Music = {
     if(tok && tok !== '-' && tok !== '.'){
       let len = 1; while(lead[(li + len) % lead.length] === '-' && len < 32) len++;
       const n = midi(tok);
-      if(n) s.tone({ bus, when: t, wave: song.leadWave || 'pulse25', f: hz(n), t: len * sd * 0.92, v: song.leadVol || 0.075, vib: len >= 4, attack: 0.008 });
+      if(n && song.steel){
+        // steel-drum lead: bright struck partials that fade fast; long notes are rolled like a real pan
+        const v = song.leadVol || 0.075, f = hz(n), hits = len >= 4 ? Math.floor(len / 2) : 1;
+        for(let j = 0; j < hits; j++){
+          const w = when => when + j * sd * 2, vv = v * (j ? 0.62 : 1);
+          s.tone({ bus, when: w(t), wave: 'sine', f, t: Math.min(0.55, len * sd), v: vv, attack: 0.004 });
+          s.tone({ bus, when: w(t), wave: 'sine', f: f * 2.01, t: 0.2, v: vv * 0.42, attack: 0.003 });
+          s.tone({ bus, when: w(t), wave: 'triangle', f: f * 3, t: 0.09, v: vv * 0.2, attack: 0.002 });
+        }
+      } else if(n) s.tone({ bus, when: t, wave: song.leadWave || 'pulse25', f: hz(n), t: len * sd * 0.92, v: song.leadVol || 0.075, vib: len >= 4, attack: 0.008 });
     }
     // bass
     const bassStyle = song.bass || 'drive';
@@ -192,6 +201,7 @@ const Music = {
     else if(bassStyle === 'pulse'){ if(k % 4 === 0) bn = root; else if(k % 4 === 2) bn = root + 12; }
     else if(bassStyle === 'walk'){ if(k % 4 === 0) bn = [root, root + 7, root + 12, root + 7][k / 4]; }
     else if(bassStyle === 'gallop'){ if(k % 4 !== 1) bn = root + (k === 8 ? 7 : 0); }
+    else if(bassStyle === 'calypso'){ const at = [0, 3, 6, 8, 11, 14].indexOf(k); if(at >= 0) bn = [root, root + 7, root + 12, root, ch[1] - 12, root + 7][at]; }
     if(bn !== null) s.tone({ bus, when: t, wave: 'triangle', f: hz(bn), t: sd * (bassStyle === 'walk' ? 3.6 : 1.7), v: 0.16, attack: 0.004 });
     // arpeggio
     if(song.arp && this.layers >= 1){
@@ -208,6 +218,10 @@ const Music = {
     if(d === 's' || d === 'x'){ s.noise({ bus, when: t, t: 0.14, v: 0.16, f: 5200, f2: 1400, type: 'bandpass', q: 0.7 }); s.tone({ bus, when: t, wave: 'triangle', f: 220, f2: 150, t: 0.07, v: 0.07 }); }
     if(d === 'h'){ s.noise({ bus, when: t, t: 0.035, v: 0.05, f: 9000, type: 'highpass' }); }
     if(d === 'o'){ s.noise({ bus, when: t, t: 0.16, v: 0.05, f: 8000, type: 'highpass' }); }
+    // island percussion: b = high bongo, l = low bongo, c = shaker
+    if(d === 'b'){ s.tone({ bus, when: t, wave: 'sine', f: 440, f2: 330, t: 0.09, v: 0.16, attack: 0.002 }); }
+    if(d === 'l'){ s.tone({ bus, when: t, wave: 'sine', f: 280, f2: 200, t: 0.13, v: 0.2, attack: 0.002 }); }
+    if(d === 'c'){ s.noise({ bus, when: t, t: 0.05, v: 0.045, f: 7000, type: 'highpass', attack: 0.012 }); }
   }
 };
 
