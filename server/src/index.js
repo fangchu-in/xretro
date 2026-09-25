@@ -12,8 +12,12 @@ const MAX_SOCKETS = 10;
 const CODE_RE = /^[A-Z]{4}$/;
 const clean = (s, n) => String(s || '').replace(/[^\p{L}\p{N} _.'!-]/gu, '').trim().slice(0, n);
 
+/* Only the xRetro site (and local testing) may use the rooms. Other websites can't borrow them. */
+const okOrigin = o => { if (!o) return true; try { const h = new URL(o).hostname; return h === 'xretro.pages.dev' || h.endsWith('.xretro.pages.dev') || h === 'localhost' || h === '127.0.0.1'; } catch (e) { return false; } };
+
 export default {
   async fetch(request, env) {
+    if (!okOrigin(request.headers.get('Origin'))) return new Response('Rooms are only for xretro.pages.dev.', { status: 403 });
     const url = new URL(request.url);
     const m = url.pathname.match(/^\/rooms\/([A-Za-z]{4})\/?$/);
     if (!m) return new Response('xRetro rooms server. Play at https://xretro.pages.dev', { status: 200 });

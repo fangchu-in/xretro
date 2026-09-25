@@ -1,6 +1,6 @@
 # xRetro — Project Handover
 
-Last updated: 25 Sep 2026. Read this whole file before touching code. Where this file and the code disagree, **the code wins**. Read `public/games/dirt.js` and `public/shared/core.js` before writing a new game.
+Last updated: 25 Sep 2026 (evening). Read this whole file before touching code. Where this file and the code disagree, **the code wins**. Read `public/games/dirt.js` and `public/shared/core.js` before writing a new game.
 
 ---
 
@@ -28,7 +28,7 @@ Last updated: 25 Sep 2026. Read this whole file before touching code. Where this
 | Thing | Value |
 |---|---|
 | Live site | https://xretro.pages.dev |
-| GitHub repo | https://github.com/fangchu-in/xretro, branch `main` (the only repo for this project) |
+| GitHub repo | https://github.com/fangchu-in/xretro, branch `main` (the only repo for this project). Being made **public** (see section 4a) |
 | Owner's local copy | `D:\Dropbox\Hobbies\xretro\` (Windows, uses CMD) |
 | Cloudflare Pages project | `xretro`, connected to the GitHub repo, output folder `public`, no build command |
 | Cloudflare Worker | `xretro-rooms`, built from the `server/` folder (Workers Builds, root dir `server`, deploy `npx wrangler deploy`). Holds the Durable Object class `Room` |
@@ -44,15 +44,18 @@ No other GitHub repos, Workers or Pages projects belong to xRetro.
 
 Push to `main` → Cloudflare Pages deploys the site in about a minute. Changes under `server/` redeploy the Worker. No GitHub Actions and no secrets are needed.
 
-**Pushing from Claude:** earlier sessions could not push. The git proxy said the repo was "not in this session's authorized repository set". The Claude GitHub App is now installed and shows fangchu-in/xretro as available, so a **new session started with the repo attached** may be able to push. **First thing in a new session:** check with `git push --dry-run`. If it works, Claude commits and pushes itself, after testing.
+**Claude does not push.** The owner's decision (25 Sep): Claude never pushes to GitHub, and doesn't try, unless the owner shares an access token for that purpose. (Every session so far got the proxy error "not in this session's authorized repository set".) Claude may commit in its own workspace copy; a stop hook will then complain about "unpushed commits". Ignore it and say so in one line.
 
-**If Claude can't push**, Claude sends the changed files and the owner runs this in CMD:
+**Workflow:** Claude tests, then sends a **zip of only the changed files** (paths inside the zip relative to the repo root, e.g. `public/games/dirt.js`). The owner saves it to Downloads and runs:
 ```cmd
 cd /d D:\Dropbox\Hobbies\xretro
+git pull origin main --no-edit
+tar -xf "%USERPROFILE%\Downloads\<name>.zip" -C D:\Dropbox\Hobbies\xretro
 git add .
-git commit -m "Add Hop Hero"
+git commit -m "<short message>"
 git push origin main
 ```
+Always start from `git pull origin main --no-edit`: when GitHub has a commit the owner's PC doesn't, the push is rejected ("non-fast-forward"), and `--no-edit` stops the merge from opening an editor. Before building, Claude runs `git fetch` and `git reset --hard origin/main` on its own copy so it works from what's actually live.
 
 **Git mistakes we already hit (avoid them):**
 - **No more bundles.** They caused merges, editor popups and a bundle file committed by mistake.
@@ -61,19 +64,8 @@ git push origin main
 - `git add .` picks up anything sitting in the folder, so keep downloads (zips, bundles) out of it.
 - The "LF will be replaced by CRLF" warnings on Windows are harmless.
 
-**Clean-up still to do (2 minutes, in CMD):**
-```cmd
-cd /d D:\Dropbox\Hobbies\xretro
-git rm --cached xretro-update.bundle
-del xretro-update.bundle xretro-patch.bundle
-echo *.bundle>> .gitignore
-echo *.zip>> .gitignore
-git add .
-git commit -m "Remove stray bundle, ignore bundles and zips"
-git push origin main
-```
-
-**Current state (25 Sep):** Hop Hero is live. Dirt Dash stuck-at-wall fix + polish added after it. Service worker version `xretro-v5`. Old merge commits have ugly messages; ignore them.
+**Current state (25 Sep, evening):** GitHub `main` = `ff4e1b7` (Dirt Dash rescue hop). Hop Hero and the Dirt Dash fix are live and confirmed working by the owner. Service worker `xretro-v5`. The stray bundle is gone and `.gitignore` ignores `*.bundle` and `*.zip`. Old merge commits have ugly messages; ignore them.
+Next commit (sent as `public-repo-update.zip`): README for a public repo, this file, and the rooms origin lock (section 4a).
 
 ---
 
@@ -85,6 +77,16 @@ git push origin main
   - Guests only send input when it changes. Keep it that way.
   - The Worker uses the **WebSocket Hibernation API** and an automatic `ping`→`pong` reply, so idle rooms cost nothing.
 - **Workspace network:** Claude's cloud workspace can reach GitHub and npm but usually not other sites (curl to xretro.pages.dev may be refused). Test locally with `wrangler dev`, not against production.
+
+### 4a. Public repo: keep Cloudflare for the family
+The repo is going public so anyone can read, fork and enjoy the code. **Nobody else should use the owner's Cloudflare.** What protects it:
+- The game connects to rooms on **its own site's address** (`location.host + '/rooms/'` in net.js), so a fork hosted anywhere else uses its own server, never ours.
+- **Origin lock:** `functions/rooms/[code].js` and `server/src/index.js` refuse browsers from any other website (`okOrigin`: only `xretro.pages.dev`, its `*.xretro.pages.dev` preview addresses, and localhost). Requests with no Origin (curl, the health check) still work. Tested: evil.example, `xretro.pages.dev.evil.com` and `null` get 403; online play still works. A determined script can fake an Origin header, so this stops other websites, not deliberate abuse.
+- No secrets in the repo or its history (checked 25 Sep). Keep it that way: never commit tokens, `.dev.vars` or account IDs.
+- **Owner to check once in Cloudflare:** for both the `xretro` Pages project and the `xretro-rooms` Worker, set build/branch control to **production branch `main` only** (no automatic preview builds for other branches or pull requests). A stranger's pull request then can't use up the 500 builds a month. Merge nothing from strangers without reading it.
+- Nobody else can push to the repo. Forks and pull requests don't touch the live site until the owner merges them.
+- README tells forkers to host on their own free Cloudflare account and edit `okOrigin`.
+- Open question for the owner: add a license (e.g. MIT) if he wants others to be *allowed* to reuse the code. Without one, it's readable but "all rights reserved".
 
 ---
 
@@ -129,14 +131,25 @@ Exports: `Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Tou
 | # | Name | Inspired by | Status |
 |---|---|---|---|
 | 1 | **Tank** | Battle City | ✅ Live. 1–4 players, co-op + battle, online, drop-in, destructible terrain, power-ups |
-| 2 | **Dirt Dash** | Excitebike | ✅ Live. 1–4 riders + CPU rivals, 4 lanes, 5 tracks (Dusty Hills, Canyon Leap, Monsoon Mud, Night Rally, Himalaya Pro), 2 laps, engine heat, PERFECT landings, Kids/Normal/Pro, split screen, online |
-| 3 | **Hop Hero** | Super Mario Bros | ✅ Built 25 Sep. 1–4 co-op, shared camera, bubbles, 3 worlds × 3 levels + 3 bosses (Thornback, Crag Crab, Baron Grumble), Kids/Normal/Pro, drop-in, online, ending |
-| 4 | **Tiki Trail** | Adventure Island | 🔜 Build next (same session as Hop Hero if possible) |
+| 2 | **Dirt Dash** | Excitebike | ✅ Live. 1–4 riders + CPU rivals, 4 lanes, 5 tracks (Dusty Hills, Canyon Leap, Monsoon Mud, Night Rally, Himalaya Pro), 2 laps, engine heat, PERFECT landings, rescue hop over walls, overtake callouts, Kids/Normal/Pro, split screen, online |
+| 3 | **Hop Hero** | Super Mario Bros | ✅ Live 25 Sep (owner confirmed). 1–4 co-op, shared camera, bubbles, 3 worlds × 3 levels + 3 bosses (Thornback, Crag Crab, Baron Grumble), Kids/Normal/Pro, drop-in, online, ending |
+| 3b | **Blacktop Brawl** | Road Rash | 🔍 **Built in another chat, not reviewed, not in the repo.** Review and integrate next (see below) |
+| 4 | **Tiki Trail** | Adventure Island | 🔜 After Blacktop Brawl |
 | 5 | **Big Top** | Circus Charlie | Later |
 | 6 | **Strike Force** | Contra | Later (2-player co-op run-and-gun, 1 fire button + aim with D-pad) |
 | 7 | **Apex GP** | F1 Race | Later (top-down racing) |
 
 The owner decides the order. Build **one game at a time, fully finished and tested**.
+
+### Blacktop Brawl (review before it goes in)
+Built 25 Sep in a separate chat on Sonnet 5 (Medium). That chat had no GitHub access and worked from uploaded copies of core.js, net.js and dirt.js. The owner has `C:\Users\vaibh\Downloads\brawl-game.zip` and `brawl.js`; **not committed**. Its summary: `public/games/brawl.js` (806 lines), 4-lane highway combat racer, auto-throttle, right = floor it, left = brake, up/down = lane, **FIRE = swing (punch, or a bat from a pickup), Down+FIRE = hop** a pothole or oil slick. Traffic, weapon pickups, health/KO and respawn, engine heat, 3 routes (Sunset Highway, Night City Run, Desert Rally), Kids/Normal/Pro, 1–4 players with Dirt Dash-style split screen, online via the snapshot pattern.
+It did **not** make `brawl.html`, the index card or the sw.js entry, and its **online mode was never tested** (no relay in that workspace). Review checklist for the next chat:
+1. Owner uploads `brawl-game.zip` (or `brawl.js`) to the chat. Read all of it before changing anything.
+2. Check it against the real engine: Lobby/Menu/Net calls, `shared:true` results menu, `startDemo()` behind the lobby, touch label, `fitText` for names, no keyboard hints on touch.
+3. Tone for young kids: cartoon bonks, not violence (e.g. a pool noodle or rubber mallet rather than a bat, "BONK!", riders tumble and pop back up). Kids mode gentler still. No names or visuals from Road Rash.
+4. Add `brawl.html`, the index card with an SVG thumbnail, sw.js `CORE` + `VERSION` bump, README row, this file.
+5. Full section 7 test, **including online host + guest** with wrangler, and a stress run to the finish like Dirt Dash's. Fix what's found, then "make it amazing" polish.
+6. Controls differ on purpose from the platformers (FIRE = attack in a racer). Keep Down+FIRE = hop/special the same as the platformers.
 
 ### Hop Hero (brief)
 Side-scrolling platformer with an original hero (not a plumber). **1–4 player co-op, shared camera** (like New Super Mario Bros): the camera follows the group, and a player who falls behind floats back in a bubble. Fire = jump (hold for higher). Stomp enemies. Coins, a growth power-up (take one extra hit), a star-style invincibility, checkpoint flag, goal pole with height bonus. 3 worlds (e.g. Meadow, Crystal Caves, Sky Castle) × 3 short levels, plus a simple boss at the end of each world. Lives are shared or a respawn bubble (no game-over frustration for kids). Kids Mode: bottomless pits bounce you back. Original bright, major-key theme per world. Online: same pattern as dirt.js.
@@ -154,10 +167,11 @@ Tropical side-scroller with an original island kid. **1–2 players** (co-op, sh
 
 Chromium and Playwright are installed in Claude's workspace (`/opt/pw-browsers`; don't run `playwright install`). Local servers:
 ```bash
-cd server && npm install && npx wrangler dev            # rooms on :8787
-cd .. && server/node_modules/.bin/wrangler pages dev    # site + /rooms on :8788
+cd server && npm install && npx wrangler dev --port 8787 --inspector-port 9331 &   # rooms
+sleep 15 && cd .. && server/node_modules/.bin/wrangler pages dev --port 8788 &    # site + /rooms
+curl localhost:8788/rooms/TEST                                                    # {"code":"TEST",...}
 ```
-What has been tested for each game: solo run to the end, 2P and 3–4P split screen, Kids Mode, phone viewport with touch, online host + guest in two browser contexts, opening from file://, and **zero console errors**. Also check the other games still work.
+What has been tested for each game: solo run to the end, 2P and 3–4P split screen, Kids Mode, phone viewport with touch, online host + guest in two browser contexts, opening from file://, and **zero console errors**. Also check the other games still work. For quick single-page checks, `python3 -m http.server 8090` in `public/` is enough.
 
 ---
 
@@ -169,7 +183,11 @@ What has been tested for each game: solo run to the end, 2P and 3–4P split scr
 - Service worker: always bump `VERSION` or TVs keep the old game. `/rooms/` is never cached.
 - Dirt Dash: races were too short (15 s), so there are now 2 laps with longer flat sections (~40 s). PERFECT fired on tiny bumps, so it now needs ≥0.38 s in the air. Speed clamp bug fixed with separate speed-up/slow-down branches. CPU riders still racing at the time limit show "still riding", not "did not finish". The lobby needs the demo race running behind it (`startDemo()`).
 - Dirt Dash: riders who came up short on a gap got stuck forever against the landing ramp's wall (crash, respawn at its foot, crash again). Now a **rescue hop** (`startHop`) carries them over in ~1 s: on hitting a wall, after a crash at the foot of one, and a safety net if a rider sits stalled with the gas on for 1.2 s. Stress-tested: every track × lane × speed finishes. Also added: overtake callouts ("2ND!"), final-lap jingle, turbo/PERFECT speed lines, crash screen shake, finish confetti, long names fitted in the HUD.
-- A merge popped up an editor in CMD and the owner got stuck (see section 3).
+- A merge popped up an editor in CMD and the owner got stuck (see section 3). A rejected push ("non-fast-forward") means GitHub has a commit the PC doesn't: `git pull origin main --no-edit`, then push again.
+- **Local test servers:** starting `wrangler dev` and `wrangler pages dev` at the same moment makes them fight over the inspector port ("Address already in use") and `/rooms` returns "Worker not found". Start the rooms Worker with `--inspector-port 9331`, wait ~15 s, then start Pages. Never `pkill -f wrangler` from Claude's shell (it kills the shell itself); find the PIDs with `ps` and kill those.
+- **Test scripts:** in the lobby, FIRE toggles ready on and off, so a test presses it **once** after joining, then waits for the countdown. A guest holding FIRE can't also "press" it: release first, then press. `window.__dirtDebug` / `window.__hopDebug` expose internals for stress tests (e.g. every track × lane × speed must finish).
+- Test scripts live in Claude's scratchpad, which is wiped between sessions. Rewrite them from these notes as needed.
+- A different chat can't see this repo unless the owner uploads files. Anything built elsewhere gets reviewed here before it goes in.
 - A game's HUD should not show keyboard hints ("PAUSE: ESC") on touch devices.
 - Long player names need `fitText()` in the HUD.
 
