@@ -418,11 +418,11 @@ const Touch = {
       }
     };
     const end = () => { pid = null; knob.style.transform = 'translate(-50%,-50%)'; touchState.up = touchState.down = touchState.left = touchState.right = false; };
-    stick.addEventListener('pointerdown', e => { pid = e.pointerId; stick.setPointerCapture(pid); move(e); e.preventDefault(); });
+    stick.addEventListener('pointerdown', e => { pid = e.pointerId; try{ stick.setPointerCapture(pid); }catch(err){} move(e); e.preventDefault(); });
     stick.addEventListener('pointermove', e => { if(e.pointerId === pid) move(e); });
     stick.addEventListener('pointerup', end); stick.addEventListener('pointercancel', end);
     const fire = ui.querySelector('.touch-fire');
-    fire.addEventListener('pointerdown', e => { touchState.fire = true; touchLatch.fire = true; fire.classList.add('on'); fire.setPointerCapture(e.pointerId); e.preventDefault(); });
+    fire.addEventListener('pointerdown', e => { touchState.fire = true; touchLatch.fire = true; fire.classList.add('on'); try{ fire.setPointerCapture(e.pointerId); }catch(err){} e.preventDefault(); });
     const fireEnd = () => { touchState.fire = false; fire.classList.remove('on'); };
     fire.addEventListener('pointerup', fireEnd); fire.addEventListener('pointercancel', fireEnd);
     const pause = ui.querySelector('.touch-pause');

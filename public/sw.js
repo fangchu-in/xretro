@@ -1,9 +1,9 @@
 /* Offline support: after one visit, the arcade keeps working without internet.
    Network first (so updates show up straight away), cached copy when offline.
    Bump VERSION when you add a game so old caches are cleared. */
-const VERSION = 'xretro-v2';
+const VERSION = 'xretro-v3';
 const CORE = [
-  './', './index.html', './tank.html', './games/tank.js',
+  './', './index.html', './tank.html', './games/tank.js', './dirt.html', './games/dirt.js',
   './shared/core.js', './shared/net.js', './shared/core.css', './shared/fonts.css',
   './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'
 ];
