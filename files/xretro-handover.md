@@ -1,6 +1,6 @@
 # xRetro — Project Handover
 
-Last updated: 25 Sep 2026 (evening). Read this whole file before touching code. Where this file and the code disagree, **the code wins**. Read `public/games/dirt.js` and `public/shared/core.js` before writing a new game.
+Last updated: 25 Sep 2026 (night, Blacktop Brawl added). Read this whole file before touching code. Where this file and the code disagree, **the code wins**. Read `public/games/dirt.js` and `public/shared/core.js` before writing a new game.
 
 ---
 
@@ -64,8 +64,8 @@ Always start from `git pull origin main --no-edit`: when GitHub has a commit the
 - `git add .` picks up anything sitting in the folder, so keep downloads (zips, bundles) out of it.
 - The "LF will be replaced by CRLF" warnings on Windows are harmless.
 
-**Current state (25 Sep, evening):** GitHub `main` = `ff4e1b7` (Dirt Dash rescue hop). Hop Hero and the Dirt Dash fix are live and confirmed working by the owner. Service worker `xretro-v5`. The stray bundle is gone and `.gitignore` ignores `*.bundle` and `*.zip`. Old merge commits have ugly messages; ignore them.
-Next commit (sent as `public-repo-update.zip`): README for a public repo, this file, and the rooms origin lock (section 4a).
+**Current state (25 Sep, night):** GitHub `main` = `60e2113` (public repo: README, handover, rooms origin lock). Hop Hero and Dirt Dash are live and confirmed working by the owner. The stray bundle is gone and `.gitignore` ignores `*.bundle` and `*.zip`. Old merge commits have ugly messages; ignore them.
+Next commit (sent as `blacktop-brawl.zip`): Blacktop Brawl (`public/brawl.html`, `public/games/brawl.js`), its index card, `sw.js` → **`xretro-v6`**, README row, this file. Tested locally, not yet pushed by the owner.
 
 ---
 
@@ -120,7 +120,7 @@ Exports: `Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Tou
 ### Adding a game (checklist)
 1. `public/games/<id>.js` + `public/<id>.html` (copy dirt.html, change the title and script)
 2. `public/index.html`: make the card playable (`chip play`, `data-href="<id>.html"`)
-3. `public/sw.js`: add both files to `CORE`, bump `VERSION` (next: `xretro-v6`)
+3. `public/sw.js`: add both files to `CORE`, bump `VERSION` (next: `xretro-v7`)
 4. Test (section 7), then commit/push
 5. Update the README game list and this file
 
@@ -133,7 +133,7 @@ Exports: `Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Tou
 | 1 | **Tank** | Battle City | ✅ Live. 1–4 players, co-op + battle, online, drop-in, destructible terrain, power-ups |
 | 2 | **Dirt Dash** | Excitebike | ✅ Live. 1–4 riders + CPU rivals, 4 lanes, 5 tracks (Dusty Hills, Canyon Leap, Monsoon Mud, Night Rally, Himalaya Pro), 2 laps, engine heat, PERFECT landings, rescue hop over walls, overtake callouts, Kids/Normal/Pro, split screen, online |
 | 3 | **Hop Hero** | Super Mario Bros | ✅ Live 25 Sep (owner confirmed). 1–4 co-op, shared camera, bubbles, 3 worlds × 3 levels + 3 bosses (Thornback, Crag Crab, Baron Grumble), Kids/Normal/Pro, drop-in, online, ending |
-| 3b | **Blacktop Brawl** | Road Rash | 🔍 **Built in another chat, not reviewed, not in the repo.** Review and integrate next (see below) |
+| 3b | **Blacktop Brawl** | Road Rash | ✅ Reviewed, reworked and tested 25 Sep; sent as `blacktop-brawl.zip`, waiting for the owner's push. 1–4 riders + CPU rivals, 4 routes, cartoon bonks, gift-box items, hops/ramps, drop-in, Kids/Normal/Pro, split screen, online |
 | 4 | **Tiki Trail** | Adventure Island | 🔜 After Blacktop Brawl |
 | 5 | **Big Top** | Circus Charlie | Later |
 | 6 | **Strike Force** | Contra | Later (2-player co-op run-and-gun, 1 fire button + aim with D-pad) |
@@ -141,15 +141,14 @@ Exports: `Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Tou
 
 The owner decides the order. Build **one game at a time, fully finished and tested**.
 
-### Blacktop Brawl (review before it goes in)
-Built 25 Sep in a separate chat on Sonnet 5 (Medium). That chat had no GitHub access and worked from uploaded copies of core.js, net.js and dirt.js. The owner has `C:\Users\vaibh\Downloads\brawl-game.zip` and `brawl.js`; **not committed**. Its summary: `public/games/brawl.js` (806 lines), 4-lane highway combat racer, auto-throttle, right = floor it, left = brake, up/down = lane, **FIRE = swing (punch, or a bat from a pickup), Down+FIRE = hop** a pothole or oil slick. Traffic, weapon pickups, health/KO and respawn, engine heat, 3 routes (Sunset Highway, Night City Run, Desert Rally), Kids/Normal/Pro, 1–4 players with Dirt Dash-style split screen, online via the snapshot pattern.
-It did **not** make `brawl.html`, the index card or the sw.js entry, and its **online mode was never tested** (no relay in that workspace). Review checklist for the next chat:
-1. Owner uploads `brawl-game.zip` (or `brawl.js`) to the chat. Read all of it before changing anything.
-2. Check it against the real engine: Lobby/Menu/Net calls, `shared:true` results menu, `startDemo()` behind the lobby, touch label, `fitText` for names, no keyboard hints on touch.
-3. Tone for young kids: cartoon bonks, not violence (e.g. a pool noodle or rubber mallet rather than a bat, "BONK!", riders tumble and pop back up). Kids mode gentler still. No names or visuals from Road Rash.
-4. Add `brawl.html`, the index card with an SVG thumbnail, sw.js `CORE` + `VERSION` bump, README row, this file.
-5. Full section 7 test, **including online host + guest** with wrangler, and a stress run to the finish like Dirt Dash's. Fix what's found, then "make it amazing" polish.
-6. Controls differ on purpose from the platformers (FIRE = attack in a racer). Keep Down+FIRE = hop/special the same as the platformers.
+### Blacktop Brawl (done)
+Started in another chat (Sonnet), then reviewed and largely rewritten here. `public/games/brawl.js` (~1275 lines).
+- **Controls:** the bike rides itself. RIGHT = zoom (heats the engine; holding it non-stop overheats and is slower than cruising), LEFT = brake, UP/DOWN = lane. **FIRE = bonk** whoever is alongside (same lane or the next one). **DOWN+FIRE = hop** (potholes, cones, balls, even cars). A quick DOWN tap waits 0.1 s before changing lane so DOWN+FIRE never also moves you down a lane. Touch button says BONK.
+- **Tone:** foam glove by default; gift boxes give a **pool noodle** (4 bonks, long reach, scoots the rider over a lane), **squeaky mallet** (3 bonks, big wobble), **rocket** (2.4 s burst, plows through traffic) or **bubble shield** (blocks one bonk or car). Bonks fill a **WOBBLE** meter; full = cartoon tumble with dizzy stars, then "BACK ON!". No blood, no KO, no health bar. Items are weighted by place (last place gets more rockets). Rivals: Ratchet, Noodles, Bronco, Zippy.
+- **Kids:** rivals never bonk, bonks never tumble (no wobble bar), hitting a car just boings you over it, gentler potholes/slicks, no finish time limit, slower rivals.
+- **Routes** (seeded generator, `buildRoute`): Sunset Coast (ocean, palms), Neon City (night, skyline, lamps), Canyon Run (mesas, cacti, mud, more ramps), Snowy Pass (mountains, pines, ice, snowfall). About 40–50 s. Traffic (cars, trucks, buses, ice-cream vans), potholes, oil/mud/ice slicks, cone rows (fly off when hit), bouncing beach balls/snowballs, ramps ("WHEE!"), blue boost arrows ("ZOOM!"), gift boxes (respawn after 3 s).
+- **Online:** traffic moves at a fixed speed per lane (`x0 + vx × simT`), and the route comes from a seed, so guests compute it from the clock; snapshots carry riders, the clock, hit cones and taken gifts (~520 bytes). Effects (stars, dust, confetti, flying cones) are derived from rider state on every device. Tested: host + guest to the results screen, a second guest **dropping in mid-race**, the guest choosing "Next route" from the shared results menu.
+- Also: rubber-band rivals (keep the pack together), overtake and FINAL STRETCH callouts, fun awards on the results screen (Bonk Boss, Air Ace, Gift Grabber, Never tumbled), route records per difficulty, comic BONK bursts, a start-of-race tip line (touch wording on phones).
 
 ### Hop Hero (brief)
 Side-scrolling platformer with an original hero (not a plumber). **1–4 player co-op, shared camera** (like New Super Mario Bros): the camera follows the group, and a player who falls behind floats back in a bubble. Fire = jump (hold for higher). Stomp enemies. Coins, a growth power-up (take one extra hit), a star-style invincibility, checkpoint flag, goal pole with height bonus. 3 worlds (e.g. Meadow, Crystal Caves, Sky Castle) × 3 short levels, plus a simple boss at the end of each world. Lives are shared or a respawn bubble (no game-over frustration for kids). Kids Mode: bottomless pits bounce you back. Original bright, major-key theme per world. Online: same pattern as dirt.js.
@@ -187,6 +186,7 @@ What has been tested for each game: solo run to the end, 2P and 3–4P split scr
 - **Local test servers:** starting `wrangler dev` and `wrangler pages dev` at the same moment makes them fight over the inspector port ("Address already in use") and `/rooms` returns "Worker not found". Start the rooms Worker with `--inspector-port 9331`, wait ~15 s, then start Pages. Never `pkill -f wrangler` from Claude's shell (it kills the shell itself); find the PIDs with `ps` and kill those.
 - **Test scripts:** in the lobby, FIRE toggles ready on and off, so a test presses it **once** after joining, then waits for the countdown. A guest holding FIRE can't also "press" it: release first, then press. `window.__dirtDebug` / `window.__hopDebug` expose internals for stress tests (e.g. every track × lane × speed must finish).
 - Test scripts live in Claude's scratchpad, which is wiped between sessions. Rewrite them from these notes as needed.
+- Blacktop Brawl: `window.__brawlDebug` has `newRace`, `sim`, `tumble`, `giveItem`, `finishRace`; setting `window.__brawl.bot = true` makes human riders drive themselves (CPU logic) for stress runs. Stress run 25 Sep: every route × difficulty, 1 and 4 riders, all finish in 37–50 s. Fixed from the original upload: CPU skill speed was never applied (Kids rivals raced at full speed), `Sound.play('finish')` isn't a built-in (now `'win'`), DOWN+FIRE also changed lane, hops had no height, traffic used `Math.random` (guests saw different cars), lane lines were drawn one lane off, near traffic was drawn behind far riders, no drop-in.
 - A different chat can't see this repo unless the owner uploads files. Anything built elsewhere gets reviewed here before it goes in.
 - A game's HUD should not show keyboard hints ("PAUSE: ESC") on touch devices.
 - Long player names need `fitText()` in the HUD.
