@@ -154,6 +154,7 @@ const Net = {
     if(m.t === 'bye'){ this.end(m.why || 'closed'); return; }
     if(m.t === 'host-away'){ this.awaySince = Date.now(); this.updatePill(); return; }
     if(m.t === 'host-back'){ this.awaySince = 0; this.updatePill(); return; }
+    if(m.t === 'cel'){ if(A.Celebrate) A.Celebrate.show(m.o, true); return; }     // NEW BEST! on every screen
     if(this.h.onMessage) this.h.onMessage(m);
   },
   fromGuest(peer, m){

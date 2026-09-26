@@ -47,6 +47,9 @@
   .tb.join{border-color:var(--teal);color:var(--teal)}
   .tb.focus{border-color:var(--amber);color:var(--amber);box-shadow:0 0 0 4px rgba(245,197,66,.25)}
   .marquee h1 .x{color:var(--teal)}
+  .medal-row{display:flex;align-items:center;gap:.35em;font-family:var(--display);font-size:clamp(10px,1.5vmin,18px);color:var(--muted)}
+  .medal-row .medal{width:1em;height:1em}
+  .medal-row b{color:var(--amber);font-weight:400;margin-left:.3em}
   .foot{color:var(--muted);font-size:clamp(12px,1.8vmin,22px);line-height:1.6}
   @media (prefers-reduced-motion:no-preference){ .cab{transition:transform .12s,border-color .12s} .cab.focus{transform:translateY(-4px)} }
 </style>
@@ -213,14 +216,29 @@
       <span class="body"><span class="row"><h2>Strike Force</h2><span class="chip play">Play</span></span><span class="kind">Robot-busting run-and-gun (Contra-style) · 6 stages · 1–4 players · co-op, online</span></span>
     </button>
 
-    <button class="cab soon" type="button" data-soon="Big Top">
+    <button class="cab" type="button" data-href="bigtop.html" data-medals="bigtop:act1,act2,act3,act4,act5,act6">
       <span class="art"><svg viewBox="0 0 160 80" aria-hidden="true">
-        <rect width="160" height="80" fill="#2a1830"/>
-        <path d="M80 10 L126 56 L34 56 Z" fill="#e2463c"/><path d="M80 10 L96 56 L64 56 Z" fill="#f4efe2"/>
-        <rect x="34" y="56" width="92" height="16" fill="#f5c542"/><rect x="72" y="60" width="16" height="12" fill="#2a1830"/>
-        <circle cx="80" cy="8" r="3" fill="#f5c542"/>
+        <rect width="160" height="80" fill="#5a1030"/>
+        <g fill="#8c1d33"><path d="M0 0 H14 L22 52 H4 Z"/><path d="M34 0 H50 L56 52 H40 Z"/><path d="M72 0 H88 L90 52 H74 Z"/><path d="M108 0 H124 L124 52 H108 Z"/><path d="M144 0 H160 V52 H142 Z"/></g>
+        <path d="M0 8 Q40 18 80 8 T160 8" stroke="#fff3c4" stroke-width=".6" fill="none" opacity=".6"/>
+        <g fill="#ffd45e"><circle cx="14" cy="11" r="1.2"/><circle cx="40" cy="13" r="1.2"/><circle cx="66" cy="10" r="1.2"/><circle cx="94" cy="10" r="1.2"/><circle cx="120" cy="13" r="1.2"/><circle cx="146" cy="10" r="1.2"/></g>
+        <g fill="#3a2440"><rect y="46" width="160" height="22"/></g>
+        <g fill="#f1c9a0" opacity=".55"><circle cx="8" cy="50" r="2.4"/><circle cx="18" cy="51" r="2.4"/><circle cx="28" cy="50" r="2.4"/><circle cx="38" cy="51" r="2.4"/><circle cx="48" cy="50" r="2.4"/><circle cx="104" cy="50" r="2.4"/><circle cx="114" cy="51" r="2.4"/><circle cx="124" cy="50" r="2.4"/><circle cx="134" cy="51" r="2.4"/><circle cx="144" cy="50" r="2.4"/><circle cx="154" cy="51" r="2.4"/></g>
+        <rect y="66" width="160" height="14" fill="#c42e46"/><rect y="64" width="160" height="4" fill="#ffd45e"/>
+        <g transform="translate(118 44)"><rect x="-10" y="0" width="20" height="20" rx="2" fill="#b8323c"/><rect x="-7" y="1" width="3" height="19" fill="#fff3e0"/><rect x="-1.5" y="1" width="3" height="19" fill="#fff3e0"/><rect x="4" y="1" width="3" height="19" fill="#fff3e0"/><rect x="-11" y="-2" width="22" height="4" rx="1.5" fill="#ffd45e"/></g>
+        <g transform="translate(78 34)"><ellipse cx="0" cy="0" rx="6" ry="18" fill="none" stroke="#c9531a" stroke-width="3"/><ellipse cx="0" cy="0" rx="6" ry="18" fill="none" stroke="#ffb36b" stroke-width="1.2"/>
+          <g fill="#ff7a1a"><path d="M-6 -6 q-3 -5 0 -9 q3 4 0 9z"/><path d="M5 -12 q-2 -6 2 -9 q2 5 -2 9z"/><path d="M6 6 q-2 -6 2 -9 q2 5 -2 9z"/><path d="M-5 12 q-3 -5 0 -9 q3 4 0 9z"/><path d="M0 -18 q-3 -5 0 -8 q3 4 0 8z"/></g></g>
+        <g transform="translate(64 30) rotate(-12)">
+          <rect x="-3" y="6" width="2.6" height="8" rx="1.2" fill="#2d2748"/><rect x="1" y="5" width="2.6" height="7" rx="1.2" fill="#2d2748"/>
+          <rect x="-4.5" y="-3" width="9" height="9" rx="3" fill="#f5c542"/><path d="M0.6 -1 l.7 1.5 1.6.2 -1.2 1.1 .3 1.6 -1.4-.8 -1.4.8 .3-1.6 -1.2-1.1 1.6-.2z" fill="#fff"/>
+          <path d="M-3 -2 L-8 -9 M3 -2 L8 -9" stroke="#ffd9b8" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="-1" cy="-7.5" r="4.4" fill="#5a3422"/><circle cx="0.6" cy="-6.6" r="4" fill="#ffd9b8"/>
+          <rect x="1.4" y="-8" width="1.2" height="2" rx=".6" fill="#231c35"/><rect x="3.6" y="-8" width="1.2" height="2" rx=".6" fill="#231c35"/>
+          <rect x="-3.6" y="-12.4" width="7" height="1.4" rx=".6" fill="#b8961f"/><rect x="-2.3" y="-16.4" width="4.6" height="4.4" rx=".8" fill="#f5c542"/><rect x="-2.3" y="-13.6" width="4.6" height=".9" fill="#fff"/>
+        </g>
+        <g fill="#ffcf3f"><path d="M30 26 l1.8 3.8 4 .4 -3 2.7 .9 4 -3.7-2.1 -3.7 2.1 .9-4 -3-2.7 4-.4z"/><path d="M44 18 l1.4 3 3.2 .3 -2.4 2.1 .7 3.2 -2.9-1.7 -2.9 1.7 .7-3.2 -2.4-2.1 3.2-.3z"/><path d="M100 22 l1.4 3 3.2 .3 -2.4 2.1 .7 3.2 -2.9-1.7 -2.9 1.7 .7-3.2 -2.4-2.1 3.2-.3z"/></g>
       </svg></span>
-      <span class="body"><span class="row"><h2>Big Top</h2><span class="chip soon">Coming soon</span></span><span class="kind">Leap the fire rings (Circus Charlie-style)</span></span>
+      <span class="body"><span class="row"><h2>Big Top</h2><span class="chip play">Play</span></span><span class="kind">Circus acrobat adventure (Circus Charlie-style) · 6 acts · 1–4 acrobats · co-op, online</span><span class="medal-row" hidden></span></span>
     </button>
 
     
@@ -283,6 +301,17 @@
     c.tabIndex = -1;
     c.addEventListener('click', () => { focus(i, true); open(i); });
     c.addEventListener('pointerenter', e => { if(e.pointerType === 'mouse') focus(i, true); });
+  });
+  // medals: games save them in arcade.medals.<game>; show one disc per stage on the card
+  cabs.forEach(c => {
+    const spec = c.dataset.medals; if(!spec) return;
+    const [game, list] = spec.split(':'), stages = list.split(','), row = c.querySelector('.medal-row');
+    if(!row || !A.Medals) return;
+    const won = stages.map(st => A.Medals.get(game, st));
+    const n = won.filter(Boolean).length;
+    row.innerHTML = won.map(m => '<span class="medal medal-' + (m || 'none') + '"></span>').join('') + '<b>' + n + '/' + stages.length + '</b>';
+    row.title = n + ' of ' + stages.length + ' medals won';
+    row.hidden = false;
   });
   focus(idx, true);
   const padsEl = document.getElementById('pads');

@@ -75,11 +75,18 @@ const Sound = {
     if(o.f2) osc.frequency.exponentialRampToValueAtTime(o.f2, t0 + o.t);
     if(o.vib){
       const lfo = c.createOscillator(), lg = c.createGain();
-      lfo.frequency.value = 5.5; lg.gain.setValueAtTime(0, t0); lg.gain.linearRampToValueAtTime(o.f * 0.012, t0 + Math.min(o.t, 0.4));
+      lfo.frequency.value = o.vibRate || 5.5; lg.gain.setValueAtTime(0, t0); lg.gain.linearRampToValueAtTime(o.f * (o.vibDepth || 0.012), t0 + Math.min(o.t, o.vibRate ? 0.12 : 0.4));
       lfo.connect(lg); lg.connect(osc.frequency); lfo.start(t0); lfo.stop(t0 + o.t + 0.05);
     }
     this.env(g, t0, o.v || 0.15, o.t, o.attack);
-    osc.connect(g); g.connect(o.bus || this.bus);
+    if(o.lp){
+      // optional low-pass (brass "blat": the filter opens as the note starts)
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = o.q || 1.2;
+      lp.frequency.setValueAtTime(o.lpFrom || o.lp, t0);
+      if(o.lpFrom) lp.frequency.exponentialRampToValueAtTime(o.lp, t0 + 0.07);
+      osc.connect(lp); lp.connect(g);
+    } else osc.connect(g);
+    g.connect(o.bus || this.bus);
     osc.start(t0); osc.stop(t0 + o.t + 0.03);
   },
   noise(o){
@@ -131,7 +138,12 @@ const SFX = {
   gameOver: s => { s.melody([[N.G4, .22], [N.E4, .22], [N.C4, .22], [196, .6]], { wave: 'triangle', v: 0.16 }); },
   win:      s => s.melody([[N.C5, .1], [N.C5, .1], [N.C5, .1], [N.C5, .3], [N.A4, .3], [N.B4, .3], [N.C5, .2], [N.B4, .1], [N.C5, .5]], { v: 0.12 }),
   countdown: s => s.tone({ f: 660, t: 0.12, v: 0.14 }),
-  go:        s => { s.tone({ f: 1320, t: 0.35, v: 0.14 }); s.tone({ f: 660, t: 0.35, v: 0.08, wave: 'triangle' }); }
+  go:        s => { s.tone({ f: 1320, t: 0.35, v: 0.14 }); s.tone({ f: 660, t: 0.35, v: 0.08, wave: 'triangle' }); },
+  // family features: personal best and medal jingles
+  best:      s => { s.melody([[N.G5, .08], [N.C6, .08], [N.E6, .08], [N.G6, .16], [0, .04], [N.E6, .08], [N.G6, .34]], { wave: 'triangle', v: 0.13 });
+                    s.melody([[N.C5, .24], [N.E5, .24], [N.G5, .5]], { wave: 'pulse25', v: 0.06 });
+                    for(let i = 0; i < 6; i++) s.tone({ wave: 'sine', f: 2400 + i * 300, t: 0.08, v: 0.03, at: 0.5 + i * 0.05 }); },
+  medal:     s => { s.melody([[N.E6, .07], [N.G6, .07], [N.C6 * 2, .22]], { wave: 'sine', v: 0.1 }); s.tone({ wave: 'triangle', f: N.C6, t: 0.4, v: 0.06, at: 0.14 }); }
 };
 
 /* ================= Music: a tiny chiptune sequencer =================
@@ -204,6 +216,18 @@ const Music = {
         s.tone({ bus, when: t, wave: 'sawtooth', f, t: ring, v: v * 0.55, attack: 0.002, glide: len >= 4 ? 0.09 : 0, glideFrom: 0.955 });
         s.tone({ bus, when: t, wave: 'triangle', f: f * 2.003, t: ring * 0.7, v: v * 0.5, attack: 0.002 });
         s.tone({ bus, when: t, wave: 'sine', f: f * 4.01, t: 0.06, v: v * 0.3, attack: 0.001 });
+      } else if(n && song.brass){
+        // big-band trumpet: a sawtooth whose filter opens as the note speaks, with a little lip bend into long notes
+        const v = song.leadVol || 0.07, f = hz(n), dur = len * sd * 0.9;
+        s.tone({ bus, when: t, wave: 'sawtooth', f, t: dur, v: v * 0.62, attack: 0.022, vib: len >= 4, glide: len >= 3 ? 0.05 : 0, glideFrom: 0.97, lp: Math.min(6000, f * 5), lpFrom: f * 1.5 });
+        s.tone({ bus, when: t, wave: 'pulse25', f, t: dur, v: v * 0.3, attack: 0.018, lp: Math.min(5000, f * 3.5) });
+      } else if(n && song.calliope){
+        // steam calliope: round organ pipes with a fast, wobbly vibrato
+        const v = song.leadVol || 0.07, f = hz(n), dur = len * sd * 0.94;
+        s.tone({ bus, when: t, wave: 'sine', f, t: dur, v, attack: 0.01, vib: true, vibRate: 7.5, vibDepth: 0.016 });
+        s.tone({ bus, when: t, wave: 'triangle', f: f * 2, t: dur, v: v * 0.34, attack: 0.01, vib: true, vibRate: 7.5, vibDepth: 0.016 });
+        s.tone({ bus, when: t, wave: 'sine', f: f * 4, t: dur * 0.6, v: v * 0.07, attack: 0.01 });
+        s.noise({ bus, when: t, t: Math.min(0.08, dur), v: v * 0.2, f: f * 3, type: 'bandpass', q: 2, attack: 0.005 });
       } else if(n) s.tone({ bus, when: t, wave: song.leadWave || 'pulse25', f: hz(n), t: len * sd * 0.92, v: song.leadVol || 0.075, vib: len >= 4, attack: 0.008 });
     }
     // tanpura-style drone: a soft Pa–Sa–Sa–Sa cycle under the whole song
@@ -222,7 +246,13 @@ const Music = {
     else if(bassStyle === 'walk'){ if(k % 4 === 0) bn = [root, root + 7, root + 12, root + 7][k / 4]; }
     else if(bassStyle === 'gallop'){ if(k % 4 !== 1) bn = root + (k === 8 ? 7 : 0); }
     else if(bassStyle === 'calypso'){ const at = [0, 3, 6, 8, 11, 14].indexOf(k); if(at >= 0) bn = [root, root + 7, root + 12, root, ch[1] - 12, root + 7][at]; }
-    if(bn !== null) s.tone({ bus, when: t, wave: 'triangle', f: hz(bn), t: sd * (bassStyle === 'walk' ? 3.6 : 1.7), v: 0.16, attack: 0.004 });
+    else if(bassStyle === 'tuba'){ if(k % 8 === 0) bn = k === 0 ? root : root + 7; }
+    if(bn !== null && bassStyle === 'tuba'){
+      // circus oom-pah: a round tuba "oom" on 1 and 3, a soft band chord "pah" on 2 and 4
+      s.tone({ bus, when: t, wave: 'sawtooth', f: hz(bn), t: sd * 3.2, v: 0.15, attack: 0.02, lp: 520, lpFrom: 180 });
+      s.tone({ bus, when: t, wave: 'triangle', f: hz(bn), t: sd * 3.2, v: 0.12, attack: 0.01 });
+    } else if(bn !== null) s.tone({ bus, when: t, wave: 'triangle', f: hz(bn), t: sd * (bassStyle === 'walk' ? 3.6 : 1.7), v: 0.16, attack: 0.004 });
+    if(bassStyle === 'tuba' && k % 8 === 4) for(const nn of ch) s.tone({ bus, when: t, wave: 'triangle', f: hz(nn + 12), t: sd * 1.3, v: 0.026, attack: 0.004 });
     // arpeggio
     if(song.arp && this.layers >= 1){
       const every = song.arp === 'fast' ? 1 : 2;
@@ -237,6 +267,9 @@ const Music = {
     if(d === 'k' || d === 'x'){ s.tone({ bus, when: t, wave: 'sine', f: 150, f2: 42, t: 0.16, v: 0.34, attack: 0.002 }); }
     if(d === 's' || d === 'x'){ s.noise({ bus, when: t, t: 0.14, v: 0.16, f: 5200, f2: 1400, type: 'bandpass', q: 0.7 }); s.tone({ bus, when: t, wave: 'triangle', f: 220, f2: 150, t: 0.07, v: 0.07 }); }
     if(d === 'h'){ s.noise({ bus, when: t, t: 0.035, v: 0.05, f: 9000, type: 'highpass' }); }
+    // marching band: r = snare roll (three quick taps), z = kick + cymbal crash
+    if(d === 'r'){ for(let j = 0; j < 3; j++) s.noise({ bus, when: t + j * sd / 3, t: 0.06, v: 0.06 + j * 0.02, f: 5200, f2: 1800, type: 'bandpass', q: 0.8 }); }
+    if(d === 'z'){ s.tone({ bus, when: t, wave: 'sine', f: 150, f2: 42, t: 0.16, v: 0.3, attack: 0.002 }); s.noise({ bus, when: t, t: 0.9, v: 0.07, f: 6500, type: 'highpass' }); }
     if(d === 'o'){ s.noise({ bus, when: t, t: 0.16, v: 0.05, f: 8000, type: 'highpass' }); }
     // island percussion: b = high bongo, l = low bongo, c = shaker
     if(d === 'b'){ s.tone({ bus, when: t, wave: 'sine', f: 440, f2: 330, t: 0.09, v: 0.16, attack: 0.002 }); }
@@ -855,7 +888,9 @@ function Display(canvas, vw, vh){
   this.canvas = canvas; this.ctx = canvas.getContext('2d', { alpha: false });
   this.vw = vw; this.vh = vh; this.scale = 1; this.dyn = 1; this.onResize = null;
   this.ema = 16; this.slowFor = 0; this.fastFor = 0;
-  const fit = () => this.resize();
+  this.settle = 3;          // seconds to ignore: loading and resizing make the first frames slow
+  this.failed = 9;          // lowest render scale that proved too slow (never retried)
+  const fit = () => { this.settle = Math.max(this.settle, 1.5); this.resize(); };
   window.addEventListener('resize', fit);
   if(window.visualViewport) window.visualViewport.addEventListener('resize', fit);
   this.resize();
@@ -875,13 +910,28 @@ Display.prototype.resize = function(){
   this.ctx.imageSmoothingEnabled = true;
   if(this.onResize) this.onResize(this.scale);
 };
-/* Auto quality: if frames are slow (e.g. an old laptop at 4K) render fewer pixels. */
+/* Auto quality: if frames are slow (e.g. an old laptop at 4K) render fewer pixels.
+   A 60 Hz TV runs at 16.7 ms a frame, so "keeping up" means under ~18.5 ms (not 13 ms, which a TV
+   can never reach). Slow loading frames are ignored, the scale steps back up gradually, and a scale
+   that proved too slow isn't retried (for a minute of smooth frames), so it can't bounce up and down. */
 Display.prototype.track = function(dt){
-  if(Settings.quality !== 'auto' || dt > 0.2) return;
+  if(Settings.quality !== 'auto') return;
+  if(dt > 0.2 || document.hidden) return;                          // a hitch or a hidden tab says nothing about speed
+  if(this.settle > 0){ this.settle -= dt; this.ema = 16.7; this.slowFor = 0; this.fastFor = 0; return; }
   this.ema = this.ema * 0.95 + dt * 1000 * 0.05;
-  if(this.ema > 21){ this.slowFor += dt; this.fastFor = 0; } else if(this.ema < 13){ this.fastFor += dt; this.slowFor = 0; } else { this.slowFor = 0; this.fastFor = 0; }
-  if(this.slowFor > 1.5 && this.dyn > 0.35){ this.dyn *= 0.8; this.slowFor = 0; this.ema = 16; this.resize(); }
-  else if(this.fastFor > 8 && this.dyn < 1){ this.dyn = Math.min(1, this.dyn * 1.12); this.fastFor = 0; this.resize(); }
+  if(this.ema > 22){ this.slowFor += dt; this.fastFor = 0; this.goodFor = 0; }
+  else if(this.ema < 18.5){ this.fastFor += dt; this.slowFor = 0; this.goodFor = (this.goodFor || 0) + dt; }
+  else { this.slowFor = 0; this.fastFor = 0; }
+  if(this.goodFor > 60 && this.failed < 9){ this.failed = 9; this.goodFor = 0; }   // a full minute of smooth frames: allow one more try
+  if(this.slowFor > 1.5 && this.dyn > 0.5){
+    this.failed = Math.min(this.failed, this.dyn);
+    this.dyn = Math.max(0.5, Math.round(this.dyn * 0.8 * 100) / 100);
+    this.slowFor = 0; this.ema = 16.7; this.settle = 1; this.resize();
+  } else if(this.fastFor > 3 && this.dyn < 1){
+    const next = Math.min(1, Math.round((this.dyn + 0.1) * 100) / 100);
+    this.fastFor = 0;
+    if(next < this.failed - 0.001){ this.dyn = next; this.settle = 1; this.resize(); }
+  }
 };
 Display.prototype.resolutionLabel = function(){ return this.canvas.width + '×' + this.canvas.height; };
 
@@ -932,15 +982,163 @@ function settingsItems(display){
   return [
     { label: 'Effects volume', value: () => Settings.volume + ' / 10', change: d => { Settings.volume = Math.max(0, Math.min(10, Settings.volume + d)); Sound.applyVolume(); saveSettings(); Sound.play('shoot'); } },
     { label: 'Music volume', value: () => Settings.music + ' / 10', change: d => { Settings.music = Math.max(0, Math.min(10, Settings.music + d)); Sound.applyVolume(); saveSettings(); } },
-    { label: 'Resolution', value: () => QUALITY_LABELS[Settings.quality], change: d => { const o = ['auto', 'high', 'medium', 'low']; Settings.quality = o[(o.indexOf(Settings.quality) + d + 4) % 4]; saveSettings(); if(display){ display.dyn = 1; display.resize(); } } },
+    { label: 'Resolution', value: () => QUALITY_LABELS[Settings.quality], change: d => { const o = ['auto', 'high', 'medium', 'low']; Settings.quality = o[(o.indexOf(Settings.quality) + d + 4) % 4]; saveSettings(); if(display){ display.dyn = 1; display.failed = 9; display.settle = 3; display.resize(); } } },
     { label: 'Fullscreen', select: () => toggleFullscreen() }
   ];
 }
 const QUALITY_LABELS = { auto: 'Auto', high: 'Up to 4K', medium: '1080p', low: '720p' };
 
+/* ================= Family features (every game: see the handover, section 5a) =================
+   Celebrate: confetti + jingle + a "NEW BEST!" banner, drawn over everything (menus too).
+   On an online host it is sent to every guest as well, so the whole family sees it. */
+const Celebrate = {
+  cv: null, ctx: null, banner: null, bits: [], raf: 0, hideT: 0,
+  ensure(){
+    if(this.cv) return;
+    this.cv = el('canvas', 'celebrate-fx'); this.cv.setAttribute('aria-hidden', 'true'); document.body.appendChild(this.cv);
+    this.ctx = this.cv.getContext('2d');
+    this.banner = el('div', 'celebrate-banner'); this.banner.hidden = true; this.banner.setAttribute('role', 'status');
+    document.body.appendChild(this.banner);
+  },
+  /* o: { title, sub, colors } */
+  show(o, remote){
+    o = Object.assign({ title: 'NEW BEST!', sub: '' }, o || {});
+    try{
+      this.ensure();
+      this.banner.innerHTML = '<div class="cb-title"></div><div class="cb-sub"></div>';
+      this.banner.querySelector('.cb-title').textContent = o.title;
+      this.banner.querySelector('.cb-sub').textContent = o.sub || '';
+      this.banner.hidden = false; this.banner.classList.remove('go'); void this.banner.offsetWidth; this.banner.classList.add('go');
+      clearTimeout(this.hideT); this.hideT = setTimeout(() => { this.banner.hidden = true; }, 3600);
+      this.burst(o.colors);
+      Sound.play('best');
+    }catch(e){}
+    const Net = window.Arcade && window.Arcade.Net;
+    if(!remote && Net && Net.role === 'host') Net.broadcast({ t: 'cel', o: { title: o.title, sub: o.sub, colors: o.colors } });
+  },
+  burst(colors){
+    const W = this.cv.width = window.innerWidth, H = this.cv.height = window.innerHeight;
+    const cols = colors && colors.length ? colors : ['#f5c542', '#3fd0b0', '#7aa8ff', '#ff7eb6', '#ff5a4e', '#ffffff'];
+    const u = Math.max(4, Math.min(W, H) / 110);
+    for(let i = 0; i < 160; i++){
+      const fromLeft = i % 2 === 0, a = (fromLeft ? -0.95 : -2.2) + (Math.random() - 0.5) * 0.7, sp = (0.9 + Math.random() * 0.9) * Math.min(W, H) * 1.5;
+      this.bits.push({ x: fromLeft ? 0 : W, y: H * 0.85, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: Math.random() * 6, vr: (Math.random() - 0.5) * 14,
+        w: u * (0.8 + Math.random()), h: u * (0.4 + Math.random() * 0.5), col: cols[i % cols.length], t: 0, life: 2.6 + Math.random() * 1.2 });
+    }
+    if(!this.raf){ let last = performance.now(); const tick = now => {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      const c = this.ctx; c.clearRect(0, 0, this.cv.width, this.cv.height);
+      for(const b of this.bits){
+        b.t += dt; b.vy += Math.min(W, H) * 1.6 * dt; b.vx *= 1 - 1.6 * dt; b.vy *= 1 - 1.2 * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.r += b.vr * dt;
+        c.save(); c.globalAlpha = Math.max(0, Math.min(1, (b.life - b.t) * 2)); c.translate(b.x, b.y); c.rotate(b.r); c.scale(1, Math.cos(b.t * 9 + b.r));
+        c.fillStyle = b.col; c.fillRect(-b.w / 2, -b.h / 2, b.w, b.h); c.restore();
+      }
+      this.bits = this.bits.filter(b => b.t < b.life);
+      if(this.bits.length) this.raf = requestAnimationFrame(tick); else { this.raf = 0; c.clearRect(0, 0, this.cv.width, this.cv.height); }
+    }; this.raf = requestAnimationFrame(tick); }
+  },
+  /* Personal bests, saved per game and key (stage, difficulty…). Returns true when this beats the old best
+     (a first clear counts too). lower = smaller is better (times). */
+  record(game, key, value, lower){
+    const k = 'best.' + game + '.' + key, prev = Store.get(k, null);
+    const better = prev === null || (lower ? value < prev : value > prev);
+    if(better) Store.set(k, value);
+    return { isNew: better, prev };
+  }
+};
+
+/* Medals: Gold / Silver / Bronze per stage and difficulty, saved under arcade.medals.<game>.
+   The launcher's game cards read the same key (works offline and on file://). */
+const MEDAL_RANK = { bronze: 1, silver: 2, gold: 3 };
+const Medals = {
+  COLORS: { gold: ['#ffd54a', '#b07d0c', '#fff3b0'], silver: ['#dfe6ef', '#7f8a99', '#ffffff'], bronze: ['#e59a5c', '#8f4f22', '#ffd2ac'] },
+  all(game){ const v = Store.get('medals.' + game, {}); return v && typeof v === 'object' ? v : {}; },
+  /* best medal for a stage (over every difficulty), or for one difficulty */
+  get(game, stage, diff){
+    const s = this.all(game)[stage]; if(!s) return null;
+    if(diff) return s[diff] || null;
+    let best = null; for(const k in s) if(MEDAL_RANK[s[k]] > (MEDAL_RANK[best] || 0)) best = s[k];
+    return best;
+  },
+  /* thresholds { gold, silver, bronze? }; lower = smaller value is better (times) */
+  pick(value, th, lower){
+    if(lower === false){ if(value >= th.gold) return 'gold'; if(value >= th.silver) return 'silver'; return th.bronze === undefined || value >= th.bronze ? 'bronze' : null; }
+    if(value <= th.gold) return 'gold'; if(value <= th.silver) return 'silver'; return th.bronze === undefined || value <= th.bronze ? 'bronze' : null;
+  },
+  award(game, stage, diff, medal){
+    if(!medal) return { medal: null, improved: false, prev: null };
+    const all = this.all(game), s = all[stage] || (all[stage] = {}), prev = s[diff] || null;
+    const improved = !prev || MEDAL_RANK[medal] > MEDAL_RANK[prev];
+    if(improved){ s[diff] = medal; Store.set('medals.' + game, all); }
+    return { medal, improved, prev };
+  },
+  summary(game, stages){
+    const out = { gold: 0, silver: 0, bronze: 0, won: 0, total: stages || 0 };
+    const all = this.all(game);
+    for(const st in all){ const m = this.get(game, st); if(m){ out[m]++; out.won++; } }
+    return out;
+  },
+  label(m){ return m ? m.charAt(0).toUpperCase() + m.slice(1) : ''; },
+  html(m){ return m ? '<span class="medal medal-' + m + '" title="' + this.label(m) + '"></span>' : ''; },
+  /* a medal on a game canvas: ribbon, rim, face and a little star */
+  draw(c, x, y, r, m){
+    if(!m){ c.strokeStyle = 'rgba(255,255,255,.28)'; c.lineWidth = Math.max(0.6, r * 0.18); c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke(); return; }
+    const col = this.COLORS[m];
+    c.fillStyle = '#d9434f'; c.beginPath(); c.moveTo(x - r * 0.9, y - r * 1.9); c.lineTo(x - r * 0.1, y - r * 1.9); c.lineTo(x + r * 0.2, y - r * 0.6); c.lineTo(x - r * 0.5, y - r * 0.6); c.fill();
+    c.fillStyle = '#3f6fd8'; c.beginPath(); c.moveTo(x + r * 0.9, y - r * 1.9); c.lineTo(x + r * 0.1, y - r * 1.9); c.lineTo(x - r * 0.2, y - r * 0.6); c.lineTo(x + r * 0.5, y - r * 0.6); c.fill();
+    c.fillStyle = col[1]; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+    c.fillStyle = col[0]; c.beginPath(); c.arc(x, y, r * 0.8, 0, Math.PI * 2); c.fill();
+    c.fillStyle = col[2]; c.beginPath();
+    for(let i = 0; i < 10; i++){ const a = -Math.PI / 2 + i * Math.PI / 5, d = i % 2 ? r * 0.2 : r * 0.48; c.lineTo(x + Math.cos(a) * d, y + Math.sin(a) * d); }
+    c.fill();
+  }
+};
+
+/* Awards: every player gets at least one kind, fun award on the results screen.
+   defs: [{ title, stat: p => number, min (default 1), all: true = everyone who qualifies, low: true = smaller wins }]
+   Returns [{ p, list: [titles] }] in player order. */
+const KIND_AWARDS = ['Team Spirit', 'Crowd Pleaser', 'Never Gave Up', 'Best Bow'];
+const Awards = {
+  pick(players, defs, opts){
+    opts = opts || {};
+    const max = opts.max || 3, out = players.map(p => ({ p, list: [] }));
+    const give = (i, title) => { if(out[i].list.length < max && !out[i].list.includes(title)) out[i].list.push(title); };
+    for(const d of defs){
+      const min = d.min === undefined ? 1 : d.min;
+      const vals = players.map(p => { try{ return +d.stat(p) || 0; }catch(e){ return 0; } });
+      const ok = vals.map(v => d.low ? v <= min : v >= min);
+      if(d.all){ ok.forEach((y, i) => { if(y) give(i, d.title); }); continue; }
+      let best = null; vals.forEach((v, i) => { if(ok[i] && (best === null || (d.low ? v < best : v > best))) best = v; });
+      if(best === null) continue;
+      vals.forEach((v, i) => { if(ok[i] && v === best) give(i, d.title); });
+    }
+    // nobody leaves empty-handed: their strongest stat relative to the table, or a kind award
+    let kind = 0;
+    out.forEach((o, i) => {
+      if(o.list.length) return;
+      let pickD = null, score = 0;
+      for(const d of defs){
+        if(d.all || d.low) continue;
+        const vals = players.map(p => { try{ return +d.stat(p) || 0; }catch(e){ return 0; } });
+        const top = Math.max(...vals); if(top <= 0 || vals[i] <= 0) continue;
+        const r = vals[i] / top; if(r > score){ score = r; pickD = d; }
+      }
+      o.list.push(pickD && pickD.runnerUp ? pickD.runnerUp : KIND_AWARDS[kind++ % KIND_AWARDS.length]);
+    });
+    return out;
+  },
+  /* HTML for a menu's text: one line per player, then the team stats */
+  html(result, team){
+    const rows = result.map(o => '<b style="color:' + o.p.color + '">' + esc(o.p.name) + '</b> ' +
+      o.list.map(t => '<span class="award">' + esc(t) + '</span>').join(' '));
+    return '<span class="awards">' + rows.join('<br>') + '</span>' + (team ? '<br><span class="team-stats">' + team + '</span>' : '');
+  }
+};
+
 window.Arcade = {
   Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Touch, Menu, Lobby, TextEntry, Display, run, toast, keepAwake,
   toggleFullscreen, goLandscape, registerOffline, settingsItems, shareInvite, el, esc, dom: { menuDom, lobbyDom },
+  Celebrate, Medals, Awards,
   PLAYER_COLORS: ['#f5c542', '#3fd0b0', '#7aa8ff', '#ff7eb6'],
   QUALITY_LABELS
 };
