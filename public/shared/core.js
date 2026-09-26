@@ -355,6 +355,8 @@ const touchLatch = { fire: false, pause: false };   // a tap shorter than one fr
 const isTouch = (window.matchMedia && matchMedia('(pointer: coarse)').matches) || (navigator.maxTouchPoints || 0) > 0;
 if(isTouch) sources.set('touch', makeSource('touch', 'touch', 'Touch screen'));
 function tapTouch(btn){ touchState[btn] = true; touchLatch[btn] = true; setTimeout(() => { touchState[btn] = false; }, 90); }
+/* hold an on-screen button down for a while (e.g. a swipe gesture standing in for 'hold UP') */
+function holdTouch(btn, ms){ touchState[btn] = true; setTimeout(() => { touchState[btn] = false; }, ms || 400); }
 
 let toastFn = null;
 window.addEventListener('gamepadconnected', e => { toastFn && toastFn('Controller ' + (e.gamepad.index + 1) + ' connected'); Sound.unlock(); });
@@ -464,7 +466,7 @@ const Input = {
   get(id){ return sources.get(id) || null; },
   pressed(s, b){ return !!(s && s[b] && !s.prev[b]); },
   pads(){ return Array.from(sources.values()).filter(s => s.kind === 'pad' && s.connected); },
-  tapTouch
+  tapTouch, holdTouch
 };
 
 /* ================= Touch controls ================= */

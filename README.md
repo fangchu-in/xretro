@@ -22,6 +22,7 @@ Plain HTML + JavaScript. No build step, no frameworks, no npm packages in the ga
 | **Volt GP** | F1 Race-style electric Grand Prix, behind-the-car 3D on 3 lanes: battery with regen braking and BOOST, Attack Mode, DRS, slipstream, pit stops, safety car, start lights, 8 tracks (Monaco, Singapore at night, Silverstone, Monza, Suzuka, Spa, Buddh, Hyderabad), quick race or championship | 1–4 + CPU rivals |
 | **Strike Force** | Contra-style run-and-gun against General Rustbolt's robot army: UP jumps and aims up, 8-way aim, Fan Shot / Beam / Seeker weapons that power up, Stomper mech, co-op SOS revive, 6 stages (jungle, waterfall climb, frozen base, scrap factory, jet-board sky chase, Iron Citadel) + 6 bosses | 1–4 |
 | **Big Top** | Circus Charlie-style circus platformer: leap through (fire) hoops, trampolines with SUPER BOUNCE, cannon launches, trapezes, tightropes in the wind, balloon rides, 3 hidden bells per act open a bonus tent, 6 acts + 3 bosses (Leo the Lion, Colonel Kaboom, the Prankster in his hot-air balloon), medals per act | 1–4 |
+| **Fizz Lab** | Dr. Mario-style falling-capsule puzzle in a candy science lab: line up 4 of a colour to pop the grumpy Gloomies, chains (FIZZ x3!), rainbow capsules, fizz bombs, ghost + next + hold. Solo levels 1–20 (Low/Med/Hi), Versus best of 3 (combos fling halves at the leader, or play Fizzbot), Big Beaker co-op in one wide shared beaker, a Daily Lab Puzzle for the whole family and 30 puzzle beakers with par. 3 music tracks (Fizz, Chill, Fever) | 1–4 |
 
 More on the way. Every game has a Kids mode and works online. All characters, levels, art and music are original.
 
@@ -37,6 +38,7 @@ public/                   the website (Cloudflare Pages serves this folder)
   volt.html, games/volt.js
   strike.html, games/strike.js
   bigtop.html, games/bigtop.js
+  fizz.html, games/fizz.js
   shared/core.js          engine: controllers, sound, music, menus, names, lobby, resolution
   shared/net.js           online rooms: host/guest, invite links, reconnect, smooth motion
   shared/core.css, shared/fonts.css, sw.js, manifest.webmanifest, icons/
