@@ -20,6 +20,7 @@ Plain HTML + JavaScript. No build step, no frameworks, no npm packages in the ga
 | **Tiki Trail** | Adventure Island-style island run: energy bar and fruit, stone axe, skateboards, secret caves, 3 islands × 3 areas + bosses | 1–2 |
 | **Mighty Yeti** | A Humble Yeti game. Mario-style quest across India with Himu the explorer yeti: Kerala to Kangchenjunga, kindness snowballs, Mighty Meter, friends who help, 6 regions × 2 levels + 3 bosses | 1–4 |
 | **Volt GP** | F1 Race-style electric Grand Prix, behind-the-car 3D on 3 lanes: battery with regen braking and BOOST, Attack Mode, DRS, slipstream, pit stops, safety car, start lights, 8 tracks (Monaco, Singapore at night, Silverstone, Monza, Suzuka, Spa, Buddh, Hyderabad), quick race or championship | 1–4 + CPU rivals |
+| **Strike Force** | Contra-style run-and-gun against General Rustbolt's robot army: UP jumps and aims up, 8-way aim, Fan Shot / Beam / Seeker weapons that power up, Stomper mech, co-op SOS revive, 6 stages (jungle, waterfall climb, frozen base, scrap factory, jet-board sky chase, Iron Citadel) + 6 bosses | 1–4 |
 
 More on the way. Every game has a Kids mode and works online. All characters, levels, art and music are original.
 

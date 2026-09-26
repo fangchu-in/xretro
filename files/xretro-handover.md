@@ -1,6 +1,6 @@
 # xRetro — Project Handover
 
-Last updated: 25 Sep 2026 (Mighty Yeti and Volt GP added). Read this whole file before touching code. Where this file and the code disagree, **the code wins**. Read `public/games/dirt.js` and `public/shared/core.js` before writing a new game.
+Last updated: 26 Sep 2026 (Strike Force added). Read this whole file before touching code. Where this file and the code disagree, **the code wins**. Read `public/games/dirt.js` and `public/shared/core.js` before writing a new game.
 
 ---
 
@@ -64,7 +64,8 @@ Always start from `git pull origin main --no-edit`: when GitHub has a commit the
 - `git add .` picks up anything sitting in the folder, so keep downloads (zips, bundles) out of it.
 - The "LF will be replaced by CRLF" warnings on Windows are harmless.
 
-**Current state (25 Sep):** GitHub `main` = `c69770f` (Add Tiki Trail, `sw.js` v7). Tank, Dirt Dash, Hop Hero, Blacktop Brawl and Tiki Trail are live. `.gitignore` ignores `*.bundle` and `*.zip`. Old merge commits have ugly messages; ignore them.
+**Current state (26 Sep):** GitHub `main` = `df543b6` (Add Mighty Yeti and Volt GP, `sw.js` v9). Next push: **Strike Force**, sent as `strike-force.zip` (`public/strike.html`, `public/games/strike.js`, index card, `sw.js` → **`xretro-v10`**, README row, this file). Tested locally, not yet pushed by the owner.
+Older note (25 Sep): GitHub `main` was `c69770f` (Add Tiki Trail, `sw.js` v7). Tank, Dirt Dash, Hop Hero, Blacktop Brawl and Tiki Trail are live. `.gitignore` ignores `*.bundle` and `*.zip`. Old merge commits have ugly messages; ignore them.
 Next push (sent as `yeti-volt.zip`, which replaces `mighty-yeti.zip`): **Mighty Yeti** (`public/yeti.html`, `public/games/yeti.js`, `core.js` music additions: bansuri flute lead, sitar pluck lead, tanpura drone, tabla/dhol/manjira drums, pitch glide in `Sound.tone`) and **Volt GP** (`public/volt.html`, `public/games/volt.js`), both index cards (the Apex GP 'coming soon' card is replaced by Volt GP), `sw.js` → **`xretro-v9`**, README rows, this file. Tested locally, not yet pushed by the owner.
 
 ---
@@ -120,7 +121,7 @@ Exports: `Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Tou
 ### Adding a game (checklist)
 1. `public/games/<id>.js` + `public/<id>.html` (copy dirt.html, change the title and script)
 2. `public/index.html`: make the card playable (`chip play`, `data-href="<id>.html"`)
-3. `public/sw.js`: add both files to `CORE`, bump `VERSION` (next: `xretro-v10`)
+3. `public/sw.js`: add both files to `CORE`, bump `VERSION` (next: `xretro-v11`)
 4. Test (section 7), then commit/push
 5. Update the README game list and this file
 
@@ -137,7 +138,7 @@ Exports: `Store, Settings, saveSettings, Sound, Music, THEMES, Names, Input, Tou
 | 4 | **Tiki Trail** | Adventure Island | ✅ Live 25 Sep (`c69770f`). 1–2 co-op, shared camera, energy bar + fruit, stone axe, skateboard, secret caves, 3 islands × 3 areas + 3 bosses, Kids/Normal/Pro, drop-in, online |
 | 4b | **Mighty Yeti** | Super Mario Bros (Humble Yeti brand game) | ✅ Built and tested 25 Sep; sent as `mighty-yeti.zip`, waiting for the owner's push. 1–4 co-op, shared camera, 6 Indian regions × 2 levels + 3 bosses, Mighty Meter, kindness snowballs, friends who follow and help, Kids/Normal/Pro, drop-in, online |
 | 5 | **Big Top** | Circus Charlie | Later |
-| 6 | **Strike Force** | Contra | Later (2-player co-op run-and-gun, 1 fire button + aim with D-pad) |
+| 6 | **Strike Force** | Contra | ✅ Built and tested 26 Sep; sent as `strike-force.zip`, waiting for the owner's push. 1–4 co-op run-and-gun, 6 stages + 6 bosses, 4 weapons, Stomper mech, SOS revive, Kids/Normal/Pro, drop-in, online |
 | 7 | **Volt GP** (was "Apex GP") | F1 Race | ✅ Built and tested 25 Sep; in `yeti-volt.zip`, waiting for the owner's push. Electric Grand Prix, behind-the-car 3D, 3 lanes, 8 tracks, 1–4 + CPU rivals, quick race or championship, online |
 
 The owner decides the order. Build **one game at a time, fully finished and tested**.
@@ -180,6 +181,19 @@ A **Humble Yeti** brand game for kids 7–12 (humbleyeti.com, tagline "mighty go
 - **Debug:** `window.__yeti` is the state, `window.__yetiDebug` has `loadLevel`, `newGame`, `sim`, `reachGoal`, `drawYeti`, `yetiSprite`… Set `p.bot = true`, `G.god = true`, `G.botSecret = true`, `G.log = []` like Tiki.
 - **Tests (25 Sep):** bot runs of all 15 stages finish on Normal (god and no-god), Kids 2P, Pro, and 4P; phone viewport with touch lobby → play; file://; online host + guest (guest moves, both reach the clear screen); other games and the index load with zero errors. The 4P HUD puts names above the meters so nothing overlaps.
 
+### Strike Force (done)
+Owner's brief (26 Sep): Contra, 2-player co-op run-and-gun, 1 fire button + aim with the D-pad, "make it fun, exciting, engaging", Kids Mode required. Built for 1–4 players (tuned for 2). `public/games/strike.js` (~3,300 lines). Shared camera that only moves forward (like Contra), tile map + `moveBody` in the Hop Hero style, menus/lobby/online/drop-in copied from hop.js.
+- **Story:** General Rustbolt's Scrap Army stole the **Sky Crystal**. All enemies are robots and burst into bolts and springs (no blood); the ending says they're recycled into playground rides. Demo bots: Blaze and Echo.
+- **Controls (settled for this game):** LEFT/RIGHT run, **UP = jump** (hold it to jump higher, and holding UP aims up; UP+RIGHT aims diagonally), **DOWN** crouches on the ground (DOWN+direction walks aiming diagonally down; in the air DOWN aims down), **FIRE shoots, hold for rapid fire**. Double-tap DOWN drops through a ledge. In water, DOWN dives under bullets. Jumps are a Contra-style somersault with a smaller hitbox. Touch: stick up = jump, button says FIRE, and touch players get a little aim assist (touch sticks are 4-way).
+- **Weapons:** Blaster (default), **Fan Shot** (3/5-way), **Beam** (pierces), **Seekers** (homing); grabbing the same one again powers it up to level 3. Items: **Shield** (10 s, own music), **Nova Blast** (clears the screen, hurts bosses), **Repair** (+1 heart). From flying **supply pods** and crates. **Stomper mech** (stages 4 and 6): walk into it, 6 armour, big cannon, stomps small bots, ejects when broken.
+- **Health and lives:** hearts per hero (Kids 5, Normal 3, Pro 1). Knocked out = "warp out" and drop back in from the sky with 2.6 s of invincibility; team lives pool (Normal 4 +2 per extra player, Pro 3 +1, Kids infinite), extra life every 20,000. No lives left but a partner still standing = **SOS bubble** until the partner touches you. Everyone out = Continue (checkpoint beacon, or straight back to the boss) or restart.
+- **Kids:** 5 hearts, enemy bullets 68% speed and half as often, weaker robots and bosses (55% HP), fewer runners, pits bounce you back, keep weapons when knocked out, aim assist, no game over. Pro: 1 heart, faster bullets, lose weapons.
+- **Stages** (each with its own original theme): 1 Jungle Outpost (crumbling bridge over water, bunkers; boss **Gatekeeper** fortress wall with 2 cannons and a core behind a shutter), 2 Thunder Falls (vertical climb up a waterfall, falling rocks, jetbots; boss **Boulder Bot**: throws bouncing boulders, belly furnace opens when it roars), 3 Frostbite Base (ice, tanks, igloo bunkers; boss **Snowplow**: shoot the cockpit, hop onto the ledge when it charges, jump the ice wave), 4 Scrap Factory (ceiling, conveyors, crushers, zap floors, breakable walls, mech; boss **Mega Claw**: stand beside the slammed claw and shoot up at the glowing core), 5 Skyway Chase (jet-board shoot-'em-up, timeline of waves in `SKY_WAVES`; boss **Thunderhull** gunship), 6 Iron Citadel (everything; boss **General Rustbolt**: fist slams with a warning shadow, eye laser low = jump / high = crouch, then his chest core opens: shoot it from underneath or from the top ledge). One secret **gold gear** per stage (saved, shown on the title). Level pieces: see the legend above `CH` in strike.js; the waterfall map `FALLS_MAP` was generated from a ledge plan (ledges 3 rows apart, every ledge has a reachable next one; the generator/validator lived in the scratchpad).
+- **Extras:** combo multiplier (×2 to ×5), WARNING banner + siren before each boss, boss one-liners as toasts on host and guests, stage-clear ranks (S/A/B/C from knock-outs and hit %), awards on the results screen (Bot Buster, Sharpshooter, Pod Popper, Untouchable), best time per stage and difficulty.
+- **Online:** host runs everything; snapshot = players, on-screen robots, player and enemy bullets (all interpolated by id), map mods (crumbled bridge, broken walls), boss state (`ph`, `v[]`, fist states). Boss one-liners go in the snapshot (`sy`/`sx`). Tested host + guest: guest moves and shoots, sees the boss, both reach the results menu.
+- **Debug:** `window.__strike` = state, `window.__strikeDebug` has `newGame`, `loadLevel`, `step`, `sim`, `bossStart`, `startClear`, `ending`, `hurt`, `giveItem`, `BOSS`, `SKY_WAVES`… Set `p.bot = true` on players and `G.god = true`. `G.check = { boss: true }; loadLevel(lv, true)` jumps to a boss.
+- **Tests (26 Sep):** bot runs of all 6 stages finish on Kids/Normal/Pro with 1, 2 and 4 players (god mode; ~30–100 s each for bots), non-god runs exercise knock-outs, SOS revive, game over and Continue; keyboard lobby → play → pause; phone viewport with touch (stick jump + FIRE); drop-in; file://; online host + guest; all other games and the index load with zero errors.
+
 ### Volt GP (done)
 Owner's brief (25 Sep, from his phone): F1 Race, but **3 lanes**, **electric cars**, **regen when slowing/braking** that can be spent to **boost/overtake**, more F1 and Formula E ideas, at least 6 famous tracks including **Singapore at night**. Owner chose: behind-the-car view, name **Volt GP**, race length picked in the menu. `public/games/volt.js` (~1,600 lines). New pseudo-3D road renderer (segment projection, drawn back to front so tunnels, bridges, walls, sprites and cars layer correctly); menus/lobby/online/drop-in copied from brawl.js.
 - **Controls:** the car accelerates by itself. LEFT/RIGHT = lane (3 lanes), DOWN = brake **and regen**, **hold FIRE = BOOST** (uses battery), UP = "box this lap" (pit request). Touch button says BOOST.
@@ -191,6 +205,8 @@ Owner's brief (25 Sep, from his phone): F1 Race, but **3 lanes**, **electric car
 - **Online:** host runs everything; snapshot ~8 cars × 22 fields (~900 bytes). Guests rebuild the track from its index. Tested host + guest: guest lane changes and boost reach the host, both reach the podium.
 - **Debug:** `window.__volt` = state, `window.__voltDebug` has `newRace`, `startChampionship`, `sim`, `finishRace`, `TK()`, `safetyCar`, `spin`… Set `G.bot = true` to make human cars drive themselves (CPU logic, also pits).
 - **Tests (25 Sep):** bot races on all 8 tracks × Short/Medium/Long, Normal/Pro/Kids, 1/2/4 players finish with zero errors (Short ≈ 80–105 s); non-braking driver crashes at Monaco and loses (bends matter); pit stops, safety car, championship round flow, podium/results, phone touch with BOOST held, file://, online host + guest, all other games load.
+
+> **Settled (Strike Force):** UP jumps (hold = higher and aim up), FIRE shoots (hold = rapid), DOWN crouches/aims down. Run-and-guns use this, platformers keep the Hop Hero scheme below.
 
 > **Settled (Hop Hero):** D-pad runs (hold to sprint), **Fire = jump (hold = higher)**, **Down + Fire = throw** (Hop Hero: sparks with the Zap Flower; Tiki Trail: the axe). Use exactly this in Tiki Trail. `hop.js` has the platformer physics (moveBody, coyote time, jump buffer, corner correction), the shared camera, bubbles and a test bot to reuse.
 
