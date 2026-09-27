@@ -375,7 +375,10 @@ function readPad(gp, s){
     const hx = gp.axes[6], hy = gp.axes[7];
     if(hx < -0.5) left = true; if(hx > 0.5) right = true; if(hy < -0.5) up = true; if(hy > 0.5) down = true;
   }
-  if(Math.abs(ax) > 0.5 || Math.abs(ay) > 0.5){
+  if(Input.eightWay && Math.hypot(ax, ay) > 0.5){
+    // opt-in (games that move freely in 2D): diagonals on the analog stick
+    if(ax < -0.38) left = true; if(ax > 0.38) right = true; if(ay < -0.38) up = true; if(ay > 0.38) down = true;
+  } else if(Math.abs(ax) > 0.5 || Math.abs(ay) > 0.5){
     if(Math.abs(ax) > Math.abs(ay)){ if(ax < 0) left = true; else right = true; }
     else { if(ay < 0) up = true; else down = true; }
   }
@@ -434,6 +437,7 @@ function packSource(s){
 
 const Input = {
   isTouch, Remote, packSource,
+  eightWay: false,          // a game sets this to true to get diagonals from analog sticks and the touch stick
   poll(){
     for(const s of sources.values()) BTN.forEach(b => { s.prev[b] = s[b]; });
     for(const id of ['kb1', 'kb2']){
@@ -487,7 +491,11 @@ const Touch = {
       knob.style.transform = 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px))';
       const nx = dx / R, ny = dy / R, dead = 0.3;
       touchState.up = touchState.down = touchState.left = touchState.right = false;
-      if(Math.hypot(nx, ny) > dead){
+      if(Math.hypot(nx, ny) > dead && Input.eightWay){
+        // opt-in 8-way stick (e.g. herding across a field): each axis past ~0.38 counts, so diagonals work
+        if(nx < -0.38) touchState.left = true; if(nx > 0.38) touchState.right = true;
+        if(ny < -0.38) touchState.up = true; if(ny > 0.38) touchState.down = true;
+      } else if(Math.hypot(nx, ny) > dead){
         if(Math.abs(nx) > Math.abs(ny)){ if(nx < 0) touchState.left = true; else touchState.right = true; }
         else { if(ny < 0) touchState.up = true; else touchState.down = true; }
       }
