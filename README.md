@@ -16,7 +16,7 @@ Plain HTML + JavaScript. No build step, no frameworks, no npm packages in the ga
 | **Tank** | Battle City-style tank battles, co-op or versus, destructible walls, power-ups | 1–4 |
 | **Dirt Dash** | Excitebike-style motocross: 5 tracks, lanes, jumps, engine heat, PERFECT landings | 1–4 + CPU rivals |
 | **Hop Hero** | Mario-style co-op platformer: 3 worlds × 3 levels + bosses, shared camera, bubbles | 1–4 |
-| **Blacktop Brawl** | Road Rash-style highway racing with cartoon bonks: 4 routes, traffic, gift-box items, hops and ramps | 1–4 + CPU rivals |
+| **Blacktop Brawl** | Road Rash-style biker brawler with a MotoGP-style chase camera: steer freely through lane traffic, punch, kick and block rivals (cartoon balance meter, stagger, tumble and hop back on), police chases, nitro earned by clean riding, 7 tracks (Meadow Run, Surf Coast, Summit Pass, Mirage Highway, Canopy Trail, Savanna Reserve, Frost Tundra at night) with trains, animals, rockfall and dust devils. Quick race, Blacktop Cup, time trial vs the family ghost; wins unlock tracks and bikes | 1–4 + CPU rivals |
 | **Tiki Trail** | Adventure Island-style island run: energy bar and fruit, stone axe, skateboards, secret caves, 3 islands × 3 areas + bosses | 1–2 |
 | **Mighty Yeti** | A Humble Yeti game. Mario-style quest across India with Himu the explorer yeti: Kerala to Kangchenjunga, kindness snowballs, Mighty Meter, friends who help, 6 regions × 2 levels + 3 bosses | 1–4 |
 | **Volt GP** | F1 Race-style electric Grand Prix, behind-the-car 3D on 3 lanes: battery with regen braking and BOOST, Attack Mode, DRS, slipstream, pit stops, safety car, start lights, 8 tracks (Monaco, Singapore at night, Silverstone, Monza, Suzuka, Spa, Buddh, Hyderabad), quick race or championship | 1–4 + CPU rivals |
