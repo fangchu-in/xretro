@@ -24,6 +24,7 @@ Plain HTML + JavaScript. No build step, no frameworks, no npm packages in the ga
 | **Big Top** | Circus Charlie-style circus platformer: leap through (fire) hoops, trampolines with SUPER BOUNCE, cannon launches, trapezes, tightropes in the wind, balloon rides, 3 hidden bells per act open a bonus tent, 6 acts + 3 bosses (Leo the Lion, Colonel Kaboom, the Prankster in his hot-air balloon), medals per act | 1–4 |
 | **Fizz Lab** | Dr. Mario-style falling-capsule puzzle in a candy science lab: line up 4 of a colour to pop the grumpy Gloomies, chains (FIZZ x3!), rainbow capsules, fizz bombs, ghost + next + hold. Solo levels 1–20 (Low/Med/Hi), Versus best of 3 (combos fling halves at the leader, or play Fizzbot), Big Beaker co-op in one wide shared beaker, a Daily Lab Puzzle for the whole family and 30 puzzle beakers with par. 3 music tracks (Fizz, Chill, Fever) | 1–4 |
 | **Round-Up Riders** | Stampede-style side-on herding: the herd bolts for the open range and 1–4 riders coax them into the corral. Tap FIRE to holler (HYAH!), hold it to herd gently; crash head-on and they scatter. Cattle, mustangs, flocking sheep, charging boars and heavy bison across 7 ranges (Sunny Ranch, Red Rock Canyon, Willow Creek, Pine Foothills, Frost Range, Moonlight Badlands at night, Seaside Bluffs) with rattlesnakes, gophers, tumbleweeds, wind gusts, river fords, timed gates and a neighbour's herd crossing. Rescue strays at the edge, streak multipliers, STAMPEDE bonus; quick round, Ranch Championship, time trial vs the family ghost | 1–4 |
+| **Full Tank Rally** | Road Fighter-style top-down road race: 1–4 drivers each get their own lane of the screen on the same course and traffic. The throttle is automatic: steer, tap FIRE to honk (swervers and lane-hoppers move over), hold it to boost, DOWN brakes. Fuel drains all the time, so catch the rainbow fuel truck; checkpoints add time. Near misses, overtaking chains, slipstreams, ramps, oil, ice, sand, puddles, road works, level crossings, narrow bridges, tunnels and side winds across 7 stages (coast, canyon, woods, snow pass, neon city at night, sky bridges, storm finale). Named rivals and a boss per stage, garage of 7 cars and liveries, power-ups, quick race, championship, time trial vs the family ghost, team relay, daily challenge, course codes, photo finish and replays, assists and accessibility options | 1–4 + rivals |
 
 More on the way. Every game has a Kids mode and works online. All characters, levels, art and music are original.
 
@@ -41,6 +42,7 @@ public/                   the website (Cloudflare Pages serves this folder)
   bigtop.html, games/bigtop.js
   fizz.html, games/fizz.js
   stampede.html, games/stampede.js
+  fulltank.html, games/fulltank.js
   shared/core.js          engine: controllers, sound, music, menus, names, lobby, resolution
   shared/net.js           online rooms: host/guest, invite links, reconnect, smooth motion
   shared/core.css, shared/fonts.css, sw.js, manifest.webmanifest, icons/
